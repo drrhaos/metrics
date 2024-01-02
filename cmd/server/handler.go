@@ -7,19 +7,12 @@ import (
 	"strings"
 )
 
-type MemStorage struct {
-	gauge   map[string]float64
-	counter map[string]int64
-}
-
-var storage MemStorage
-
-func updateMetric(res http.ResponseWriter, req *http.Request) {
+func updateMetricHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 		argsString := strings.TrimPrefix(req.URL.Path, "/update/")
 		s := strings.Split(argsString, "/")
 		if len(s) != 3 {
-			res.WriteHeader(http.StatusBadRequest)
+			res.WriteHeader(http.StatusNotFound)
 			return
 		}
 		typeMetric := s[0]
@@ -52,22 +45,11 @@ func updateMetric(res http.ResponseWriter, req *http.Request) {
 				return
 			}
 			storage.gauge[nameMetric] = valueFloatMetric
-			// fmt.Println(nameMetric, valueFloatMetric)
+			fmt.Println(nameMetric, valueFloatMetric)
 		}
 		res.WriteHeader(http.StatusOK)
 	} else {
 		res.WriteHeader(http.StatusBadRequest)
 	}
 	return
-}
-
-func main() {
-	storage.counter = make(map[string]int64)
-	storage.gauge = make(map[string]float64)
-	mux := http.NewServeMux()
-	mux.HandleFunc(`/update/`, updateMetric)
-	err := http.ListenAndServe(`:8080`, mux)
-	if err != nil {
-		panic(err)
-	}
 }
