@@ -1,13 +1,22 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"math/rand"
 	"net/http"
 	"runtime"
 	"strconv"
 	"time"
+
+	"github.com/caarlos0/env/v6"
 )
+
+type Config struct {
+	Address        string `env:"ADDRESS"`
+	ReportInterval int64  `env:"REPORT_INTERVAL"`
+	PollInterval   int64  `env:"POLL_INTERVAL"`
+}
 
 type MemStorage struct {
 	gauge   map[string]float64
@@ -44,9 +53,9 @@ func (stat *MemStorage) update(cur runtime.MemStats) {
 	stat.gauge["TotalAlloc"] = float64(cur.TotalAlloc)
 }
 
-func sendData(typeMetric string, nameMetric string, valueMetric string) {
+func sendData(endpoint *string, typeMetric string, nameMetric string, valueMetric string) {
 	client := &http.Client{}
-	urlStr := fmt.Sprintf("http://127.0.0.1:8080/update/%s/%s/%s", typeMetric, nameMetric, valueMetric)
+	urlStr := fmt.Sprintf("http://%s/update/%s/%s/%s", *endpoint, typeMetric, nameMetric, valueMetric)
 	r, _ := http.NewRequest(http.MethodPost, urlStr, nil) // URL-encoded payload
 	r.Header.Add("Content-Type", "text/plain")
 	_, err := client.Do(r)
@@ -56,11 +65,22 @@ func sendData(typeMetric string, nameMetric string, valueMetric string) {
 }
 
 func main() {
+	endpoint := flag.String("a", "127.0.0.1:8080", "Net address endpoint host:port")
+	reportInterval := flag.Int64("r", 10, "Report interval")
+	pollInterval := flag.Int64("p", 2, "Pool interval")
+	flag.Parse()
+
+	var cfg Config
+	err := env.Parse(&cfg)
+	if err == nil {
+		endpoint = &cfg.Address
+		reportInterval = &cfg.ReportInterval
+		pollInterval = &cfg.PollInterval
+	}
+
 	metricsCpu := MemStorage{
 		gauge: map[string]float64{},
 	}
-	var pollInterval int64 = 2
-	var reportInterval int64 = 10
 	var PollCount int64 = 0
 	var m runtime.MemStats
 	var RandomValue float64
@@ -70,18 +90,18 @@ func main() {
 		metricsCpu.update(m)
 		RandomValue = rand.Float64()
 
-		if (PollCount*pollInterval)%reportInterval == 0 {
+		if (PollCount**pollInterval)%*reportInterval == 0 {
 			// update
-			sendData("counter", "PollCount", strconv.FormatInt(PollCount, 10))
-			sendData("gauge", "RandomValue", strconv.FormatFloat(RandomValue, 'f', -1, 64))
+			sendData(endpoint, "counter", "PollCount", strconv.FormatInt(PollCount, 10))
+			sendData(endpoint, "gauge", "RandomValue", strconv.FormatFloat(RandomValue, 'f', -1, 64))
 			for nameMetric, valueMetric := range metricsCpu.gauge {
-				sendData("gauge", nameMetric, strconv.FormatFloat(valueMetric, 'f', -1, 64))
+				sendData(endpoint, "gauge", nameMetric, strconv.FormatFloat(valueMetric, 'f', -1, 64))
 				// fmt.Println(named, value)
 			}
 
 			// fmt.Printf("alloc %f", mm.Alloc)
 		}
 
-		time.Sleep(time.Duration(pollInterval) * time.Second)
+		time.Sleep(time.Duration(*pollInterval) * time.Second)
 	}
 }

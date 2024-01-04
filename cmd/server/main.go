@@ -1,8 +1,10 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -15,15 +17,15 @@ type MemStorage struct {
 var storage MemStorage
 
 func main() {
+	endpoint := flag.String("a", "127.0.0.1:8080", "Net address endpoint host:port")
+	flag.Parse()
+
+	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
+		endpoint = &envRunAddr
+	}
+
 	storage.counter = make(map[string]int64)
 	storage.gauge = make(map[string]float64)
-	// mux := http.NewServeMux()
-	// mux.HandleFunc(`/update/`, updateMetricHandler)
-	// err := http.ListenAndServe(`:8080`, mux)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
 	r := chi.NewRouter()
 
 	r.Route("/", func(r chi.Router) {
@@ -41,5 +43,5 @@ func main() {
 			})
 		})
 	})
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Fatal(http.ListenAndServe(*endpoint, r))
 }
