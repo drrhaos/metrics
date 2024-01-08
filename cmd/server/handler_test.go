@@ -9,32 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// func TestUpdateMetricHandler(t *testing.T) {
-// 	var storage MemStorage
-// 	storage.init()
-
-// 	r := chi.NewRouter()
-
-// 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-// 		getNameMetricsHandler(w, r, storage)
-// 	})
-// 	r.Post("/update/{typeMetric}/{nameMetric}/{valueMetric}", func(w http.ResponseWriter, r *http.Request) {
-// 		updateMetricHandler(w, r, storage)
-// 	})
-// 	r.Get("/value/{typeMetric}/{nameMetric}", func(w http.ResponseWriter, r *http.Request) {
-// 		getMetricHandler(w, r, storage)
-// 	})
-
-// 	req := httptest.NewRequest(http.MethodPost, "/update/counter/PollCount/10", nil)
-// 	w := httptest.NewRecorder()
-
-// 	r.ServeHTTP(w, req)
-
-// 	if w.Code != http.StatusOK {
-// 		t.Errorf("expected status OK; got %v", w.Code)
-// 	}
-// }
-
 func Test_updateMetricHandler(t *testing.T) {
 	var storage MemStorage
 	storage.init()

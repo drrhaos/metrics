@@ -52,7 +52,6 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage Mem
 		storage.updateGauge(nameMetric, valueFloatMetric)
 	}
 	res.WriteHeader(http.StatusOK)
-	return
 }
 
 func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage MemStorage) {
@@ -64,6 +63,7 @@ func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage MemStorag
 		return
 	}
 	var currentValue string
+
 	if typeMetric == "counter" {
 		cur, ok := storage.getCounter(nameMetric)
 		if ok {
