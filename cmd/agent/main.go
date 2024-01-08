@@ -62,7 +62,13 @@ func sendData(endpoint *string, typeMetric string, nameMetric string, valueMetri
 	urlStr := fmt.Sprintf("http://%s/update/%s/%s/%s", *endpoint, typeMetric, nameMetric, valueMetric)
 	r, _ := http.NewRequest(http.MethodPost, urlStr, nil) // URL-encoded payload
 	r.Header.Add("Content-Type", "text/plain")
-	client.Do(r)
+	resp, err := client.Do(r)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer resp.Body.Close()
+
 }
 
 func main() {
