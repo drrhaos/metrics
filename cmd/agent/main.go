@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"os"
 	"runtime"
 	"strconv"
 	"time"
@@ -58,24 +59,34 @@ func sendData(endpoint *string, typeMetric string, nameMetric string, valueMetri
 	urlStr := fmt.Sprintf("http://%s/update/%s/%s/%s", *endpoint, typeMetric, nameMetric, valueMetric)
 	r, _ := http.NewRequest(http.MethodPost, urlStr, nil) // URL-encoded payload
 	r.Header.Add("Content-Type", "text/plain")
-	_, err := client.Do(r)
-	if err != nil {
-		// fmt.Println("error")
-	}
+	client.Do(r)
 }
 
 func main() {
-	endpoint := flag.String("a", "127.0.0.1:8080", "Net address endpoint host:port")
-	reportInterval := flag.Int64("r", 10, "Report interval")
-	pollInterval := flag.Int64("p", 2, "Pool interval")
-	flag.Parse()
-
-	var cfg Config
+	var endpoint *string
+	var reportInterval *int64
+	var pollInterval *int64
+	cfg := Config{}
 	err := env.Parse(&cfg)
 	if err == nil {
 		endpoint = &cfg.Address
 		reportInterval = &cfg.ReportInterval
 		pollInterval = &cfg.PollInterval
+	}
+	if *endpoint == "" {
+		endpoint = flag.String("a", "127.0.0.1:8080", "Net address endpoint host:port")
+	}
+	if *reportInterval == 0 {
+		reportInterval = flag.Int64("r", 10, "Report interval integer sec > 0")
+	}
+	if *pollInterval == 0 {
+		pollInterval = flag.Int64("p", 2, "Pool interval integer sec > 0")
+	}
+	flag.Parse()
+
+	if *reportInterval <= 0 || *pollInterval <= 0 {
+		flag.PrintDefaults()
+		os.Exit(0)
 	}
 
 	metricsCpu := MemStorage{
@@ -91,15 +102,11 @@ func main() {
 		RandomValue = rand.Float64()
 
 		if (PollCount**pollInterval)%*reportInterval == 0 {
-			// update
 			sendData(endpoint, "counter", "PollCount", strconv.FormatInt(PollCount, 10))
 			sendData(endpoint, "gauge", "RandomValue", strconv.FormatFloat(RandomValue, 'f', -1, 64))
 			for nameMetric, valueMetric := range metricsCpu.gauge {
 				sendData(endpoint, "gauge", nameMetric, strconv.FormatFloat(valueMetric, 'f', -1, 64))
-				// fmt.Println(named, value)
 			}
-
-			// fmt.Printf("alloc %f", mm.Alloc)
 		}
 
 		time.Sleep(time.Duration(*pollInterval) * time.Second)
