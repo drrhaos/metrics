@@ -44,7 +44,7 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage Mem
 	}
 
 	if typeMetric == "gauge" {
-		valueFloatMetric, err := strconv.ParseFloat(valueMetric, 10)
+		valueFloatMetric, err := strconv.ParseFloat(valueMetric, 64)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			return
