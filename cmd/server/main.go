@@ -6,42 +6,30 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi"
 )
 
-type MemStorage struct {
-	gauge   map[string]float64
-	counter map[string]int64
-}
-
-var storage MemStorage
-
 func main() {
+
 	endpoint := flag.String("a", "127.0.0.1:8080", "Net address endpoint host:port")
 	flag.Parse()
 
 	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
 		endpoint = &envRunAddr
 	}
+	var storage MemStorage
+	storage.init()
 
-	storage.counter = make(map[string]int64)
-	storage.gauge = make(map[string]float64)
 	r := chi.NewRouter()
 
-	r.Route("/", func(r chi.Router) {
-		r.Get("/", getNameMetricsHandler)
-		r.Route("/update", func(r chi.Router) {
-			r.Route("/{typeMetric}", func(r chi.Router) {
-				r.Route("/{nameMetric}", func(r chi.Router) {
-					r.Post("/{valueMetric}", updateMetricHandler)
-				})
-			})
-		})
-		r.Route("/value", func(r chi.Router) {
-			r.Route("/{typeMetric}", func(r chi.Router) {
-				r.Get("/{nameMetric}", getMetricHandler)
-			})
-		})
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		getNameMetricsHandler(w, r, storage)
+	})
+	r.Post("/update/{typeMetric}/{nameMetric}/{valueMetric}", func(w http.ResponseWriter, r *http.Request) {
+		updateMetricHandler(w, r, storage)
+	})
+	r.Get("/value/{typeMetric}/{nameMetric}", func(w http.ResponseWriter, r *http.Request) {
+		getMetricHandler(w, r, storage)
 	})
 	log.Fatal(http.ListenAndServe(*endpoint, r))
 }
