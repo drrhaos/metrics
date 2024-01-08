@@ -20,8 +20,11 @@ type Config struct {
 }
 
 type MemStorage struct {
-	gauge   map[string]float64
-	counter map[string]int64
+	gauge map[string]float64
+}
+
+func (stat *MemStorage) updateGauge(nameMetric string, valueMetric float64) {
+	stat.gauge[nameMetric] = valueMetric
 }
 
 func (stat *MemStorage) update(cur runtime.MemStats) {
@@ -89,22 +92,20 @@ func main() {
 		os.Exit(0)
 	}
 
-	metricsCpu := MemStorage{
+	metricsCPU := MemStorage{
 		gauge: map[string]float64{},
 	}
 	var PollCount int64 = 0
 	var m runtime.MemStats
-	var RandomValue float64
 	for {
 		PollCount++
 		runtime.ReadMemStats(&m)
-		metricsCpu.update(m)
-		RandomValue = rand.Float64()
+		metricsCPU.update(m)
+		metricsCPU.updateGauge("RandomValue", rand.Float64())
 
 		if (PollCount**pollInterval)%*reportInterval == 0 {
 			sendData(endpoint, "counter", "PollCount", strconv.FormatInt(PollCount, 10))
-			sendData(endpoint, "gauge", "RandomValue", strconv.FormatFloat(RandomValue, 'f', -1, 64))
-			for nameMetric, valueMetric := range metricsCpu.gauge {
+			for nameMetric, valueMetric := range metricsCPU.gauge {
 				sendData(endpoint, "gauge", nameMetric, strconv.FormatFloat(valueMetric, 'f', -1, 64))
 			}
 		}
