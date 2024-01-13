@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -10,12 +9,11 @@ type MemStorage struct {
 	counter map[string]int64
 }
 
-func (storage *MemStorage) init() {
+func (storage *MemStorage) makeStorage() {
 	storage.counter = make(map[string]int64)
 	storage.gauge = make(map[string]float64)
 }
 func (storage *MemStorage) updateMetric(typeMetric string, nameMetric string, valueMetric string) bool {
-	fmt.Println(typeMetric, nameMetric, valueMetric)
 	if typeMetric == typeMetricCounter {
 		valueIntMetric, err := strconv.ParseInt(valueMetric, 10, 64)
 		if err != nil {

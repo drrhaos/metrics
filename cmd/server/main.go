@@ -31,7 +31,7 @@ func main() {
 	}
 
 	var storage MemStorage
-	storage.init()
+	storage.makeStorage()
 
 	r := chi.NewRouter()
 

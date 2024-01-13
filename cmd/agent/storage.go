@@ -11,7 +11,7 @@ type MemStorage struct {
 	counter map[string]int64
 }
 
-func (storage *MemStorage) init() {
+func (storage *MemStorage) makeStorage() {
 	storage.counter = make(map[string]int64)
 	storage.gauge = make(map[string]float64)
 }

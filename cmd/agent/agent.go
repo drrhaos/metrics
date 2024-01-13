@@ -38,7 +38,7 @@ func sendMetrics(endpoint string, metricsCPU MemStorage) {
 func collectMetrics(cfg Config) {
 
 	var metricsCPU MemStorage
-	metricsCPU.init()
+	metricsCPU.makeStorage()
 	var PollCount int64 = 0
 	var m runtime.MemStats
 
