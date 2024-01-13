@@ -21,9 +21,10 @@ const form = `<html>
 </html>`
 
 func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
-	typeMetric := chi.URLParam(req, "typeMetric")
-	nameMetric := chi.URLParam(req, "nameMetric")
-	valueMetric := chi.URLParam(req, "valueMetric")
+	typeMetric := chi.URLParam(req, typeMetricConst)
+	nameMetric := chi.URLParam(req, nameMetricConst)
+	valueMetric := chi.URLParam(req, valueMetricConst)
+
 	if typeMetric != typeMetricCounter && typeMetric != typeMetricGauge {
 		res.WriteHeader(http.StatusBadRequest)
 		return
@@ -46,8 +47,8 @@ func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage *MemStora
 		http.Error(rw, "Not found", http.StatusNotFound)
 		return
 	}
-	typeMetric := chi.URLParam(r, "typeMetric")
-	nameMetric := chi.URLParam(r, "nameMetric")
+	typeMetric := chi.URLParam(r, typeMetricConst)
+	nameMetric := chi.URLParam(r, nameMetricConst)
 
 	if typeMetric == "" || nameMetric == "" {
 		http.Error(rw, "Not found", http.StatusNotFound)

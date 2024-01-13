@@ -12,6 +12,13 @@ import (
 
 const typeMetricCounter = "counter"
 const typeMetricGauge = "gauge"
+const typeMetricConst = "typeMetric"
+const nameMetricConst = "nameMetric"
+const valueMetricConst = "valueMetric"
+
+const urlGetMetricsConst = "/"
+const urlUpdateMetricsConst = "/update/{typeMetric}/{nameMetric}/{valueMetric}"
+const urlGetMetricConst = "/value/{typeMetric}/{nameMetric}"
 
 func main() {
 	cfg, ok := readStartParams()
@@ -29,15 +36,13 @@ func main() {
 
 	r := chi.NewRouter()
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("urlGetMetricsConst", func(w http.ResponseWriter, r *http.Request) {
 		getNameMetricsHandler(w, r, storage)
 	})
-	r.Post("/update/{typeMetric}/{nameMetric}/{valueMetric}", func(w http.ResponseWriter, r *http.Request) {
-		// storage.mut.Lock()
-		// defer storage.mut.Unlock()
+	r.Post(urlUpdateMetricsConst, func(w http.ResponseWriter, r *http.Request) {
 		updateMetricHandler(w, r, storage)
 	})
-	r.Get("/value/{typeMetric}/{nameMetric}", func(w http.ResponseWriter, r *http.Request) {
+	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
 		getMetricHandler(w, r, storage)
 	})
 	log.Fatal(http.ListenAndServe(cfg.Address, r))
