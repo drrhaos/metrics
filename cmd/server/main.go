@@ -20,8 +20,10 @@ func main() {
 		os.Exit(0)
 	}
 
-	var storage MemStorage
-	storage = storage.makeStorage()
+	storage := MemStorage{
+		counter: make(map[string]int64),
+		gauge:   make(map[string]float64),
+	}
 
 	r := chi.NewRouter()
 

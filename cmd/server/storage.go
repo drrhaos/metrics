@@ -9,12 +9,6 @@ type MemStorage struct {
 	counter map[string]int64
 }
 
-func (storage *MemStorage) makeStorage() MemStorage {
-	return MemStorage{
-		counter: make(map[string]int64),
-		gauge:   make(map[string]float64),
-	}
-}
 func (storage *MemStorage) updateMetric(typeMetric string, nameMetric string, valueMetric string) bool {
 	if typeMetric == typeMetricCounter {
 		valueIntMetric, err := strconv.ParseInt(valueMetric, 10, 64)

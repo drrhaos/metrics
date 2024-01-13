@@ -10,8 +10,10 @@ import (
 )
 
 func Test_updateMetricHandler(t *testing.T) {
-	var storage MemStorage
-	storage = storage.makeStorage()
+	storage := MemStorage{
+		counter: make(map[string]int64),
+		gauge:   make(map[string]float64),
+	}
 
 	r := chi.NewRouter()
 
@@ -109,8 +111,10 @@ func Test_updateMetricHandler(t *testing.T) {
 }
 
 func Test_getMetricHandler(t *testing.T) {
-	var storage MemStorage
-	storage = storage.makeStorage()
+	storage := MemStorage{
+		counter: make(map[string]int64),
+		gauge:   make(map[string]float64),
+	}
 	storage.updateMetric("counter", "testCounter", "10")
 	storage.updateMetric("gauge", "testGauge", "11.1")
 	storage.updateMetric("gauge", "testGauge2", "12.1")
@@ -217,8 +221,10 @@ func Test_getMetricHandler(t *testing.T) {
 }
 
 func Test_getNameMetricsHandler(t *testing.T) {
-	var storage MemStorage
-	storage = storage.makeStorage()
+	storage := MemStorage{
+		counter: make(map[string]int64),
+		gauge:   make(map[string]float64),
+	}
 	storage.updateMetric("counter", "testCounter", "10")
 	storage.updateMetric("gauge", "testGauge", "11.1")
 	storage.updateMetric("gauge", "testGauge2", "12.1")
