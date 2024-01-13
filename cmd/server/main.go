@@ -23,7 +23,6 @@ func readM() string {
 }
 
 func main() {
-
 	cfg, ok := readStartParams()
 
 	if !ok {

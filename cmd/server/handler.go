@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi"
 )
@@ -33,25 +32,12 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage Mem
 		res.WriteHeader(http.StatusNotFound)
 		return
 	}
-
-	if typeMetric == typeMetricCounter {
-		valueIntMetric, err := strconv.ParseInt(valueMetric, 10, 64)
-		if err != nil {
-			res.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		storage.updateCounter(nameMetric, valueIntMetric)
+	ok := storage.updateMetric(typeMetric, nameMetric, valueMetric)
+	if ok {
+		res.WriteHeader(http.StatusOK)
+	} else {
+		res.WriteHeader(http.StatusBadRequest)
 	}
-
-	if typeMetric == typeMetricGauge {
-		valueFloatMetric, err := strconv.ParseFloat(valueMetric, 64)
-		if err != nil {
-			res.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		storage.updateGauge(nameMetric, valueFloatMetric)
-	}
-	res.WriteHeader(http.StatusOK)
 }
 
 func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage MemStorage) {
@@ -62,27 +48,13 @@ func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage MemStorag
 		http.Error(rw, "Not found", http.StatusNotFound)
 		return
 	}
-	var currentValue string
 
-	switch typeMetric {
-	case typeMetricCounter:
-		cur, ok := storage.getCounter(nameMetric)
-		if ok {
-			currentValue = strconv.FormatInt(cur, 10)
-		} else {
-			rw.WriteHeader(http.StatusNotFound)
-			return
-		}
-	case typeMetricGauge:
-		cur, ok := storage.getGauge(nameMetric)
-		if ok {
-			currentValue = strconv.FormatFloat(cur, 'f', -1, 64)
-		} else {
-			rw.WriteHeader(http.StatusNotFound)
-			return
-		}
+	currentValue, ok := storage.getMetric(typeMetric, nameMetric)
+	if ok {
+		rw.Write([]byte(currentValue))
+	} else {
+		rw.WriteHeader(http.StatusNotFound)
 	}
-	rw.Write([]byte(currentValue))
 }
 
 func getNameMetricsHandler(rw http.ResponseWriter, r *http.Request, storage MemStorage) {

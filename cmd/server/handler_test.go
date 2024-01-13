@@ -111,9 +111,9 @@ func Test_updateMetricHandler(t *testing.T) {
 func Test_getMetricHandler(t *testing.T) {
 	var storage MemStorage
 	storage.init()
-	storage.updateCounter("testCounter", 10)
-	storage.updateGauge("testGauge", 11.1)
-	storage.updateGauge("testGauge2", 12.1)
+	storage.updateMetric("counter", "testCounter", "10")
+	storage.updateMetric("gauge", "testGauge", "11.1")
+	storage.updateMetric("gauge", "testGauge2", "12.1")
 
 	r := chi.NewRouter()
 
@@ -219,9 +219,9 @@ func Test_getMetricHandler(t *testing.T) {
 func Test_getNameMetricsHandler(t *testing.T) {
 	var storage MemStorage
 	storage.init()
-	storage.updateCounter("testCounter", 10)
-	storage.updateGauge("testGauge", 11.1)
-	storage.updateGauge("testGauge2", 12.1)
+	storage.updateMetric("counter", "testCounter", "10")
+	storage.updateMetric("gauge", "testGauge", "11.1")
+	storage.updateMetric("gauge", "testGauge2", "12.1")
 
 	r := chi.NewRouter()
 
