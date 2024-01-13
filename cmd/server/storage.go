@@ -2,14 +2,18 @@ package main
 
 import (
 	"strconv"
+	"sync"
 )
 
 type MemStorage struct {
 	gauge   map[string]float64
 	counter map[string]int64
+	mut     sync.Mutex
 }
 
 func (storage *MemStorage) updateMetric(typeMetric string, nameMetric string, valueMetric string) bool {
+	storage.mut.Lock()
+	defer storage.mut.Unlock()
 	if typeMetric == typeMetricCounter {
 		valueIntMetric, err := strconv.ParseInt(valueMetric, 10, 64)
 		if err != nil {

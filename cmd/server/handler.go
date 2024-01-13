@@ -20,7 +20,7 @@ const form = `<html>
     </body>
 </html>`
 
-func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage MemStorage) {
+func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
 	typeMetric := chi.URLParam(req, "typeMetric")
 	nameMetric := chi.URLParam(req, "nameMetric")
 	valueMetric := chi.URLParam(req, "valueMetric")
@@ -41,7 +41,7 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage Mem
 	}
 }
 
-func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage MemStorage) {
+func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage *MemStorage) {
 	typeMetric := chi.URLParam(r, "typeMetric")
 	nameMetric := chi.URLParam(r, "nameMetric")
 
@@ -61,7 +61,7 @@ func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage MemStorag
 	}
 }
 
-func getNameMetricsHandler(rw http.ResponseWriter, r *http.Request, storage MemStorage) {
+func getNameMetricsHandler(rw http.ResponseWriter, r *http.Request, storage *MemStorage) {
 	var list string
 	for key, val := range storage.counter {
 		list += fmt.Sprintf("<li>%s: %d</li>", key, val)

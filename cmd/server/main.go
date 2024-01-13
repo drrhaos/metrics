@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 
 	"github.com/go-chi/chi"
 )
@@ -20,9 +21,10 @@ func main() {
 		os.Exit(0)
 	}
 
-	storage := MemStorage{
+	storage := &MemStorage{
 		counter: make(map[string]int64),
 		gauge:   make(map[string]float64),
+		mut:     sync.Mutex{},
 	}
 
 	r := chi.NewRouter()
@@ -31,6 +33,8 @@ func main() {
 		getNameMetricsHandler(w, r, storage)
 	})
 	r.Post("/update/{typeMetric}/{nameMetric}/{valueMetric}", func(w http.ResponseWriter, r *http.Request) {
+		// storage.mut.Lock()
+		// defer storage.mut.Unlock()
 		updateMetricHandler(w, r, storage)
 	})
 	r.Get("/value/{typeMetric}/{nameMetric}", func(w http.ResponseWriter, r *http.Request) {
