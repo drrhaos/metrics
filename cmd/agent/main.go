@@ -15,7 +15,7 @@ func sendMetrics(endpoint string, metricsCPU MemStorage) {
 	client := &http.Client{}
 	for nameMetric, valueMetric := range metricsCPU.gauge {
 		urlStr := fmt.Sprintf("http://%s/update/gauge/%s/%f", endpoint, nameMetric, valueMetric)
-		r, _ := http.NewRequest(http.MethodPost, urlStr, nil) // URL-encoded payload
+		r, _ := http.NewRequest(http.MethodPost, urlStr, nil)
 		r.Header.Add("Content-Type", "text/plain")
 		resp, err := client.Do(r)
 		if err == nil {
@@ -27,7 +27,7 @@ func sendMetrics(endpoint string, metricsCPU MemStorage) {
 
 	for nameMetric, valueMetric := range metricsCPU.counter {
 		urlStr := fmt.Sprintf("http://%s/update/counter/%s/%d", endpoint, nameMetric, valueMetric)
-		r, _ := http.NewRequest(http.MethodPost, urlStr, nil) // URL-encoded payload
+		r, _ := http.NewRequest(http.MethodPost, urlStr, nil)
 		r.Header.Add("Content-Type", "text/plain")
 		resp, err := client.Do(r)
 		if err == nil {
