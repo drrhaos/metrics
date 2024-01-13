@@ -8,6 +8,9 @@ import (
 const randomValueName = "RandomValue"
 const pollCountName = "PollCount"
 
+const urlUpdateCounterConst = "http://%s/update/counter/%s/%d"
+const urlUpdateGaugeConst = "http://%s/update/gauge/%s/%f"
+
 var nameGauges = []string{
 	"Alloc",
 	"BuckHashSys",

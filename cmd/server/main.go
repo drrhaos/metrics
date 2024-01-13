@@ -17,7 +17,7 @@ const nameMetricConst = "nameMetric"
 const valueMetricConst = "valueMetric"
 
 const urlGetMetricsConst = "/"
-const urlUpdateMetricsConst = "/update/{typeMetric}/{nameMetric}/{valueMetric}"
+const urlUpdateMetricConst = "/update/{typeMetric}/{nameMetric}/{valueMetric}"
 const urlGetMetricConst = "/value/{typeMetric}/{nameMetric}"
 
 func main() {
@@ -36,10 +36,10 @@ func main() {
 
 	r := chi.NewRouter()
 
-	r.Get("urlGetMetricsConst", func(w http.ResponseWriter, r *http.Request) {
+	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
 		getNameMetricsHandler(w, r, storage)
 	})
-	r.Post(urlUpdateMetricsConst, func(w http.ResponseWriter, r *http.Request) {
+	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
 		updateMetricHandler(w, r, storage)
 	})
 	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
