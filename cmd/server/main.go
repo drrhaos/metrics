@@ -12,16 +12,6 @@ import (
 const typeMetricCounter = "counter"
 const typeMetricGauge = "gauge"
 
-func readM() string {
-	endpoint := flag.String("a", "127.0.0.1:8080", "Net address endpoint host:port")
-	flag.Parse()
-	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
-		endpoint = &envRunAddr
-	}
-
-	return *endpoint
-}
-
 func main() {
 	cfg, ok := readStartParams()
 
@@ -31,7 +21,7 @@ func main() {
 	}
 
 	var storage MemStorage
-	storage.makeStorage()
+	storage = storage.makeStorage()
 
 	r := chi.NewRouter()
 

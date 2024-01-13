@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -51,7 +52,10 @@ func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage MemStorag
 
 	currentValue, ok := storage.getMetric(typeMetric, nameMetric)
 	if ok {
-		rw.Write([]byte(currentValue))
+		_, err := rw.Write([]byte(currentValue))
+		if err != nil {
+			log.Printf("Ошибка записи: %v", err)
+		}
 	} else {
 		rw.WriteHeader(http.StatusNotFound)
 	}
@@ -66,5 +70,8 @@ func getNameMetricsHandler(rw http.ResponseWriter, r *http.Request, storage MemS
 		list += fmt.Sprintf("<li>%s: %f</li>", key, val)
 	}
 	formFull := fmt.Sprintf(form, list)
-	io.WriteString(rw, formFull)
+	_, err := io.WriteString(rw, formFull)
+	if err != nil {
+		log.Printf("Ошибка записи: %v", err)
+	}
 }
