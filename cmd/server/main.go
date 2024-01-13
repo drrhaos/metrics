@@ -9,6 +9,9 @@ import (
 	"github.com/go-chi/chi"
 )
 
+const typeMetricCounter = "counter"
+const typeMetricGauge = "gauge"
+
 func readM() string {
 	endpoint := flag.String("a", "127.0.0.1:8080", "Net address endpoint host:port")
 	flag.Parse()

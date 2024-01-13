@@ -24,7 +24,7 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage Mem
 	typeMetric := chi.URLParam(req, "typeMetric")
 	nameMetric := chi.URLParam(req, "nameMetric")
 	valueMetric := chi.URLParam(req, "valueMetric")
-	if typeMetric != "counter" && typeMetric != "gauge" {
+	if typeMetric != typeMetricCounter && typeMetric != typeMetricGauge {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -34,7 +34,7 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage Mem
 		return
 	}
 
-	if typeMetric == "counter" {
+	if typeMetric == typeMetricCounter {
 		valueIntMetric, err := strconv.ParseInt(valueMetric, 10, 64)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
@@ -43,7 +43,7 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage Mem
 		storage.updateCounter(nameMetric, valueIntMetric)
 	}
 
-	if typeMetric == "gauge" {
+	if typeMetric == typeMetricGauge {
 		valueFloatMetric, err := strconv.ParseFloat(valueMetric, 64)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
@@ -65,7 +65,7 @@ func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage MemStorag
 	var currentValue string
 
 	switch typeMetric {
-	case "counter":
+	case typeMetricCounter:
 		cur, ok := storage.getCounter(nameMetric)
 		if ok {
 			currentValue = strconv.FormatInt(cur, 10)
@@ -73,7 +73,7 @@ func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage MemStorag
 			rw.WriteHeader(http.StatusNotFound)
 			return
 		}
-	case "gauge":
+	case typeMetricGauge:
 		cur, ok := storage.getGauge(nameMetric)
 		if ok {
 			currentValue = strconv.FormatFloat(cur, 'f', -1, 64)
