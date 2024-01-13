@@ -42,6 +42,10 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *Me
 }
 
 func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage *MemStorage) {
+	if storage == nil {
+		http.Error(rw, "Not found", http.StatusNotFound)
+		return
+	}
 	typeMetric := chi.URLParam(r, "typeMetric")
 	nameMetric := chi.URLParam(r, "nameMetric")
 
@@ -62,6 +66,10 @@ func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage *MemStora
 }
 
 func getNameMetricsHandler(rw http.ResponseWriter, r *http.Request, storage *MemStorage) {
+	if storage == nil {
+		http.Error(rw, "Not found", http.StatusNotFound)
+		return
+	}
 	var list string
 	for key, val := range storage.counter {
 		list += fmt.Sprintf("<li>%s: %d</li>", key, val)

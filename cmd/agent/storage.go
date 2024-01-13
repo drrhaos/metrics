@@ -12,9 +12,17 @@ type MemStorage struct {
 }
 
 func (stat *MemStorage) updateGauge(nameMetric string, valueMetric float64) {
+	if stat == nil {
+		log.Println("Хранилище не может быть nil")
+		return
+	}
 	stat.gauge[nameMetric] = valueMetric
 }
 func (stat *MemStorage) updateCounter(nameMetric string, valueMetric int64) {
+	if stat == nil {
+		log.Println("Хранилище не может быть nil")
+		return
+	}
 	stat.counter[nameMetric] = valueMetric
 }
 

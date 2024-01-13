@@ -12,6 +12,9 @@ type MemStorage struct {
 }
 
 func (storage *MemStorage) updateMetric(typeMetric string, nameMetric string, valueMetric string) bool {
+	if storage == nil {
+		return false
+	}
 	storage.mut.Lock()
 	defer storage.mut.Unlock()
 	if typeMetric == typeMetricCounter {
@@ -33,6 +36,9 @@ func (storage *MemStorage) updateMetric(typeMetric string, nameMetric string, va
 }
 
 func (storage *MemStorage) getMetric(typeMetric string, nameMetric string) (currentValue string, exists bool) {
+	if storage == nil {
+		return currentValue, false
+	}
 	switch typeMetric {
 	case typeMetricCounter:
 		cur, ok := storage.counter[nameMetric]
