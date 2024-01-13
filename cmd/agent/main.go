@@ -18,11 +18,10 @@ func sendMetrics(endpoint string, metricsCPU MemStorage) {
 		r, _ := http.NewRequest(http.MethodPost, urlStr, nil) // URL-encoded payload
 		r.Header.Add("Content-Type", "text/plain")
 		resp, err := client.Do(r)
-		if err != nil {
-			log.Println("Ошибка при выполнении запроса", urlStr)
-
-		} else {
+		if err == nil {
 			defer resp.Body.Close()
+		} else {
+			log.Println("Ошибка при выполнении запроса", urlStr)
 		}
 	}
 
@@ -31,25 +30,22 @@ func sendMetrics(endpoint string, metricsCPU MemStorage) {
 		r, _ := http.NewRequest(http.MethodPost, urlStr, nil) // URL-encoded payload
 		r.Header.Add("Content-Type", "text/plain")
 		resp, err := client.Do(r)
-		if err != nil {
-			log.Println("Ошибка при выполнении запроса", urlStr)
-
-		} else {
+		if err == nil {
 			defer resp.Body.Close()
+		} else {
+			log.Println("Ошибка при выполнении запроса", urlStr)
 		}
 	}
 }
 
 func main() {
 	cfg, ok := readStartParams()
-	if ok == false {
+	if !ok {
 		flag.PrintDefaults()
 		os.Exit(0)
 	}
-	metricsCPU := MemStorage{
-		gauge:   map[string]float64{},
-		counter: map[string]int64{},
-	}
+	var metricsCPU MemStorage
+	metricsCPU.init()
 	var PollCount int64 = 0
 	var m runtime.MemStats
 

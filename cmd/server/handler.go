@@ -57,7 +57,7 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage Mem
 func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage MemStorage) {
 	typeMetric := chi.URLParam(r, "typeMetric")
 	nameMetric := chi.URLParam(r, "nameMetric")
-	// fmt.Println(typeMetric, nameMetric)
+
 	if typeMetric == "" || nameMetric == "" {
 		http.Error(rw, "Not found", http.StatusNotFound)
 		return
