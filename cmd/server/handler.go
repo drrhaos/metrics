@@ -64,7 +64,8 @@ func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage MemStorag
 	}
 	var currentValue string
 
-	if typeMetric == "counter" {
+	switch typeMetric {
+	case "counter":
 		cur, ok := storage.getCounter(nameMetric)
 		if ok {
 			currentValue = strconv.FormatInt(cur, 10)
@@ -72,7 +73,7 @@ func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage MemStorag
 			rw.WriteHeader(http.StatusNotFound)
 			return
 		}
-	} else if typeMetric == "gauge" {
+	case "gauge":
 		cur, ok := storage.getGauge(nameMetric)
 		if ok {
 			currentValue = strconv.FormatFloat(cur, 'f', -1, 64)
@@ -85,7 +86,6 @@ func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage MemStorag
 }
 
 func getNameMetricsHandler(rw http.ResponseWriter, r *http.Request, storage MemStorage) {
-	// rw.Header().Set("Content-Type", "application/json")
 	var list string
 	for key, val := range storage.counter {
 		list += fmt.Sprintf("<li>%s: %d</li>", key, val)
