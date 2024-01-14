@@ -35,32 +35,41 @@ func sendMetrics(endpoint string, metricsCPU MemStorage) {
 		}
 	}
 }
+
+func updateMertic(metricsCPU MemStorage, PollCount int64) {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	metricsCPU.updateGauge(randomValueName, rand.Float64())
+	metricsCPU.updateCounter(pollCountName, PollCount)
+
+	for _, name := range nameGauges {
+		floatValue, ok := getFloat64MemStats(m, name)
+		if ok {
+			metricsCPU.updateGauge(name, floatValue)
+		}
+	}
+}
+
 func collectMetrics(cfg Config) {
 	metricsCPU := MemStorage{
 		counter: make(map[string]int64),
 		gauge:   make(map[string]float64),
 	}
 
-	var PollCount int64 = 0
-	var m runtime.MemStats
-
-	for {
-		runtime.ReadMemStats(&m)
-		PollCount++
-		metricsCPU.updateGauge(randomValueName, rand.Float64())
-		metricsCPU.updateCounter(pollCountName, PollCount)
-
-		for _, name := range nameGauges {
-			floatValue, ok := getFloat64MemStats(m, name)
-			if ok {
-				metricsCPU.updateGauge(name, floatValue)
-			}
+	go func() {
+		var PollCount int64
+		for {
+			PollCount++
+			time.Sleep(time.Duration(cfg.PollInterval) * time.Second)
+			updateMertic(metricsCPU, PollCount)
 		}
+	}()
 
-		if (PollCount*cfg.PollInterval)%cfg.ReportInterval == 0 {
+	go func() {
+		for {
+			time.Sleep(time.Duration(cfg.ReportInterval) * time.Second)
 			sendMetrics(cfg.Address, metricsCPU)
 		}
-
-		time.Sleep(time.Duration(cfg.PollInterval) * time.Second)
-	}
+	}()
+	select {}
 }
