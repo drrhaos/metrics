@@ -39,6 +39,8 @@ func (storage *MemStorage) getMetric(typeMetric string, nameMetric string) (curr
 	if storage == nil {
 		return currentValue, false
 	}
+	storage.mut.Lock()
+	defer storage.mut.Unlock()
 	switch typeMetric {
 	case typeMetricCounter:
 		cur, ok := storage.counter[nameMetric]
