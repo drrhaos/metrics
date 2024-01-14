@@ -4,11 +4,13 @@ import (
 	"log"
 	"reflect"
 	"runtime"
+	"sync"
 )
 
 type MemStorage struct {
 	gauge   map[string]float64
 	counter map[string]int64
+	mut     sync.Mutex
 }
 
 func (stat *MemStorage) updateGauge(nameMetric string, valueMetric float64) {
@@ -16,6 +18,8 @@ func (stat *MemStorage) updateGauge(nameMetric string, valueMetric float64) {
 		log.Println("Хранилище не может быть nil")
 		return
 	}
+	stat.mut.Lock()
+	defer stat.mut.Unlock()
 	stat.gauge[nameMetric] = valueMetric
 }
 func (stat *MemStorage) updateCounter(nameMetric string, valueMetric int64) {
@@ -23,6 +27,8 @@ func (stat *MemStorage) updateCounter(nameMetric string, valueMetric int64) {
 		log.Println("Хранилище не может быть nil")
 		return
 	}
+	stat.mut.Lock()
+	defer stat.mut.Unlock()
 	stat.counter[nameMetric] = valueMetric
 }
 

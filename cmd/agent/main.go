@@ -42,6 +42,7 @@ var nameGauges = []string{
 }
 
 func main() {
+
 	cfg, ok := readStartParams()
 	if !ok {
 		flag.PrintDefaults()

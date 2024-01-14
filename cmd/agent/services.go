@@ -6,10 +6,25 @@ import (
 	"math/rand"
 	"net/http"
 	"runtime"
+	"sync"
 	"time"
 )
 
-func sendMetrics(endpoint string, metricsCPU MemStorage) {
+func updateMertics(metricsCPU *MemStorage, PollCount int64) {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	metricsCPU.updateGauge(randomValueName, rand.Float64())
+	metricsCPU.updateCounter(pollCountName, PollCount)
+
+	for _, name := range nameGauges {
+		floatValue, ok := getFloat64MemStats(m, name)
+		if ok {
+			metricsCPU.updateGauge(name, floatValue)
+		}
+	}
+}
+
+func sendMetrics(endpoint string, metricsCPU *MemStorage) {
 	client := &http.Client{}
 	for nameMetric, valueMetric := range metricsCPU.gauge {
 		urlStr := fmt.Sprintf(urlUpdateGaugeConst, endpoint, nameMetric, valueMetric)
@@ -36,24 +51,11 @@ func sendMetrics(endpoint string, metricsCPU MemStorage) {
 	}
 }
 
-func updateMertic(metricsCPU MemStorage, PollCount int64) {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	metricsCPU.updateGauge(randomValueName, rand.Float64())
-	metricsCPU.updateCounter(pollCountName, PollCount)
-
-	for _, name := range nameGauges {
-		floatValue, ok := getFloat64MemStats(m, name)
-		if ok {
-			metricsCPU.updateGauge(name, floatValue)
-		}
-	}
-}
-
 func collectMetrics(cfg Config) {
-	metricsCPU := MemStorage{
+	metricsCPU := &MemStorage{
 		counter: make(map[string]int64),
 		gauge:   make(map[string]float64),
+		mut:     sync.Mutex{},
 	}
 
 	go func() {
@@ -61,7 +63,7 @@ func collectMetrics(cfg Config) {
 		for {
 			PollCount++
 			time.Sleep(time.Duration(cfg.PollInterval) * time.Second)
-			updateMertic(metricsCPU, PollCount)
+			updateMertics(metricsCPU, PollCount)
 		}
 	}()
 
