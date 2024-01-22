@@ -7,7 +7,9 @@ import (
 	"os"
 	"sync"
 
+	"github.com/drrhaos/metrics/internal/logger"
 	"github.com/go-chi/chi"
+	"go.uber.org/zap"
 )
 
 const typeMetricCounter = "counter"
@@ -19,6 +21,8 @@ const valueMetricConst = "valueMetric"
 const urlGetMetricsConst = "/"
 const urlUpdateMetricConst = "/update/{typeMetric}/{nameMetric}/{valueMetric}"
 const urlGetMetricConst = "/value/{typeMetric}/{nameMetric}"
+
+const flagLogLevel = "info"
 
 func main() {
 	cfg, ok := readStartParams()
@@ -34,7 +38,12 @@ func main() {
 		mut:     sync.Mutex{},
 	}
 
+	if err := logger.Initialize(flagLogLevel); err != nil {
+		panic(err)
+	}
+
 	r := chi.NewRouter()
+	logger.Log.Info("Running server", zap.String("address", cfg.Address))
 
 	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
 		getNameMetricsHandler(w, r, storage)
@@ -45,5 +54,5 @@ func main() {
 	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
 		getMetricHandler(w, r, storage)
 	})
-	log.Fatal(http.ListenAndServe(cfg.Address, r))
+	log.Fatal(http.ListenAndServe(cfg.Address, logger.RequestLogger(r)))
 }
