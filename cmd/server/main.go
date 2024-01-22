@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"log"
 	"net/http"
 	"os"
 	"sync"
@@ -54,5 +53,5 @@ func main() {
 	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
 		getMetricHandler(w, r, storage)
 	})
-	log.Fatal(http.ListenAndServe(cfg.Address, logger.RequestLogger(r)))
+	http.ListenAndServe(cfg.Address, logger.RequestLogger(r))
 }

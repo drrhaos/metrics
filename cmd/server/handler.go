@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 
+	"github.com/drrhaos/metrics/internal/logger"
 	"github.com/go-chi/chi"
 )
 
@@ -59,7 +59,7 @@ func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage *MemStora
 	if ok {
 		_, err := rw.Write([]byte(currentValue))
 		if err != nil {
-			log.Printf("Ошибка записи: %v", err)
+			logger.Log.Info("Ошибка записи")
 		}
 	} else {
 		rw.WriteHeader(http.StatusNotFound)
@@ -81,6 +81,6 @@ func getNameMetricsHandler(rw http.ResponseWriter, r *http.Request, storage *Mem
 	formFull := fmt.Sprintf(form, list)
 	_, err := io.WriteString(rw, formFull)
 	if err != nil {
-		log.Printf("Ошибка записи: %v", err)
+		logger.Log.Info("Ошибка записи")
 	}
 }

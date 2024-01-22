@@ -2,10 +2,10 @@ package main
 
 import (
 	"flag"
-	"log"
 	"net/url"
 
 	"github.com/caarlos0/env/v6"
+	"github.com/drrhaos/metrics/internal/logger"
 )
 
 type Config struct {
@@ -16,7 +16,7 @@ func readStartParams() (Config, bool) {
 	cfg := Config{}
 	err := env.Parse(&cfg)
 	if err != nil {
-		log.Printf("Не удалось найти переменные окружения: %v", err)
+		logger.Log.Info("Не удалось найти переменные окружения")
 	}
 	address := flag.String("a", "127.0.0.1:8080", "Net address endpoint host:port")
 	flag.Parse()
