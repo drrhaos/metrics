@@ -13,7 +13,7 @@ const pollCountName = "PollCount"
 const urlUpdateCounterConst = "http://%s/update/counter/%s/%d"
 
 const urlUpdateGaugeConst = "http://%s/update/gauge/%s/%f"
-const urlUpdateJsonConst = "http://%s/update/"
+const urlUpdateJSONConst = "http://%s/update/"
 
 var nameGauges = []string{
 	"Alloc",
