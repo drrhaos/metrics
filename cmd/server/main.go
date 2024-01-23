@@ -19,9 +19,9 @@ const valueMetricConst = "valueMetric"
 
 const urlGetMetricsConst = "/"
 const urlUpdateMetricConst = "/update/{typeMetric}/{nameMetric}/{valueMetric}"
-const urlUpdateMetricJsonConst = "/update/"
+const urlUpdateMetricJSONConst = "/update/"
 const urlGetMetricConst = "/value/{typeMetric}/{nameMetric}"
-const urlGetMetricJsonConst = "/value/"
+const urlGetMetricJSONConst = "/value/"
 
 const flagLogLevel = "info"
 
@@ -52,14 +52,14 @@ func main() {
 	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
 		updateMetricHandler(w, r, storage)
 	})
-	r.Post(urlUpdateMetricJsonConst, func(w http.ResponseWriter, r *http.Request) {
-		updateMetricJsonHandler(w, r, storage)
+	r.Post(urlUpdateMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		updateMetricJSONHandler(w, r, storage)
 	})
 	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
 		getMetricHandler(w, r, storage)
 	})
-	r.Post(urlGetMetricJsonConst, func(w http.ResponseWriter, r *http.Request) {
-		getMetricJsonHandler(w, r, storage)
+	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		getMetricJSONHandler(w, r, storage)
 	})
 	err := http.ListenAndServe(cfg.Address, logger.RequestLogger(r))
 	if err != nil {

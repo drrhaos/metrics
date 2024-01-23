@@ -40,7 +40,7 @@ func sendMetrics(endpoint string, metricsCPU *MemStorage) {
 		metric.MType = typeMetricGauge
 		metric.ID = nameMetric
 		metric.Value = &valueMetric
-		urlStr := fmt.Sprintf(urlUpdateJsonConst, endpoint)
+		urlStr := fmt.Sprintf(urlUpdateJSONConst, endpoint)
 		reqData, err := json.Marshal(metric)
 		if err != nil {
 			log.Println("Ошибка при выполнении запроса", urlStr)
@@ -61,7 +61,7 @@ func sendMetrics(endpoint string, metricsCPU *MemStorage) {
 		metric.MType = typeMetricCounter
 		metric.ID = nameMetric
 		metric.Delta = &valueMetric
-		urlStr := fmt.Sprintf(urlUpdateJsonConst, endpoint)
+		urlStr := fmt.Sprintf(urlUpdateJSONConst, endpoint)
 		reqData, err := json.Marshal(metric)
 		if err != nil {
 			log.Println("Ошибка при выполнении запроса", urlStr)

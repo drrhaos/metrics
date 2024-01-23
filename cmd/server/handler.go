@@ -29,7 +29,7 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
-func updateMetricJsonHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
+func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
 	var metrics Metrics
 	var buf bytes.Buffer
 
@@ -129,7 +129,7 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *Me
 	}
 }
 
-func getMetricJsonHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
+func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
 	if storage == nil {
 		http.Error(res, "storage == nil", http.StatusNotFound)
 		return
