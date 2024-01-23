@@ -19,6 +19,7 @@ const valueMetricConst = "valueMetric"
 
 const urlGetMetricsConst = "/"
 const urlUpdateMetricConst = "/update/{typeMetric}/{nameMetric}/{valueMetric}"
+const urlUpdateMetricJsonConst = "/update/"
 const urlGetMetricConst = "/value/{typeMetric}/{nameMetric}"
 
 const flagLogLevel = "info"
@@ -50,8 +51,14 @@ func main() {
 	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
 		updateMetricHandler(w, r, storage)
 	})
+	r.Post(urlUpdateMetricJsonConst, func(w http.ResponseWriter, r *http.Request) {
+		updateMetricJsonHandler(w, r, storage)
+	})
 	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
 		getMetricHandler(w, r, storage)
 	})
-	http.ListenAndServe(cfg.Address, logger.RequestLogger(r))
+	err := http.ListenAndServe(cfg.Address, logger.RequestLogger(r))
+	if err != nil {
+		logger.Log.Fatal("Error start server")
+	}
 }

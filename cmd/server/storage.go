@@ -11,27 +11,23 @@ type MemStorage struct {
 	mut     sync.Mutex
 }
 
-func (storage *MemStorage) updateMetric(typeMetric string, nameMetric string, valueMetric string) bool {
+func (storage *MemStorage) updateCounter(nameMetric string, valueMetric int64) bool {
 	if storage == nil {
 		return false
 	}
 	storage.mut.Lock()
 	defer storage.mut.Unlock()
-	if typeMetric == typeMetricCounter {
-		valueIntMetric, err := strconv.ParseInt(valueMetric, 10, 64)
-		if err != nil {
-			return false
-		}
-		storage.counter[nameMetric] += valueIntMetric
-	}
+	storage.counter[nameMetric] += valueMetric
+	return true
+}
 
-	if typeMetric == typeMetricGauge {
-		valueFloatMetric, err := strconv.ParseFloat(valueMetric, 64)
-		if err != nil {
-			return false
-		}
-		storage.gauge[nameMetric] = valueFloatMetric
+func (storage *MemStorage) updateGauge(nameMetric string, valueMetric float64) bool {
+	if storage == nil {
+		return false
 	}
+	storage.mut.Lock()
+	defer storage.mut.Unlock()
+	storage.gauge[nameMetric] = valueMetric
 	return true
 }
 
@@ -55,5 +51,6 @@ func (storage *MemStorage) getMetric(typeMetric string, nameMetric string) (curr
 			exists = true
 		}
 	}
+
 	return currentValue, exists
 }

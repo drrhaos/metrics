@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/drrhaos/metrics/internal/logger"
 	"github.com/go-chi/chi"
@@ -20,6 +23,45 @@ const form = `<html>
     </body>
 </html>`
 
+type Metrics struct {
+	ID    string   `json:"id"`              // имя метрики
+	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
+	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+}
+
+func updateMetricJsonHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
+	var metrics Metrics
+	var buf bytes.Buffer
+
+	_, err := buf.ReadFrom(req.Body)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err = json.Unmarshal(buf.Bytes(), &metrics); err != nil {
+		http.Error(res, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	typeMetric := metrics.MType
+	nameMetric := metrics.ID
+	var ok bool
+	switch typeMetric {
+	case typeMetricCounter:
+		ok = storage.updateCounter(nameMetric, *metrics.Delta)
+	case typeMetricGauge:
+		ok = storage.updateGauge(nameMetric, *metrics.Value)
+	}
+
+	if ok {
+		res.WriteHeader(http.StatusOK)
+	} else {
+		res.WriteHeader(http.StatusBadRequest)
+	}
+}
+
 func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
 	typeMetric := chi.URLParam(req, typeMetricConst)
 	nameMetric := chi.URLParam(req, nameMetricConst)
@@ -34,7 +76,23 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *Me
 		res.WriteHeader(http.StatusNotFound)
 		return
 	}
-	ok := storage.updateMetric(typeMetric, nameMetric, valueMetric)
+
+	var ok bool
+	switch typeMetric {
+	case typeMetricCounter:
+		valueIntMetric, err := strconv.ParseInt(valueMetric, 10, 64)
+		if err != nil {
+			break
+		}
+		ok = storage.updateCounter(nameMetric, valueIntMetric)
+	case typeMetricGauge:
+		valueFloatMetric, err := strconv.ParseFloat(valueMetric, 64)
+		if err != nil {
+			break
+		}
+		ok = storage.updateGauge(nameMetric, valueFloatMetric)
+	}
+
 	if ok {
 		res.WriteHeader(http.StatusOK)
 	} else {
