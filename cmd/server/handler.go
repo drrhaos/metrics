@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/drrhaos/metrics/internal/logger"
 	"github.com/go-chi/chi"
 )
 
@@ -50,16 +49,46 @@ func updateMetricJsonHandler(res http.ResponseWriter, req *http.Request, storage
 	var ok bool
 	switch typeMetric {
 	case typeMetricCounter:
+		if metrics.Delta == nil {
+			break
+		}
 		ok = storage.updateCounter(nameMetric, *metrics.Delta)
 	case typeMetricGauge:
+		if metrics.Value == nil {
+			break
+		}
 		ok = storage.updateGauge(nameMetric, *metrics.Value)
 	}
-
+	res.Header().Set("Content-Type", "application/json")
 	if ok {
 		res.WriteHeader(http.StatusOK)
 	} else {
 		res.WriteHeader(http.StatusBadRequest)
 	}
+
+	var respMetrics Metrics
+	curStrValue, exist := storage.getMetric(typeMetric, nameMetric)
+	if exist {
+		respMetrics.ID = nameMetric
+		respMetrics.MType = typeMetric
+		curValue, err := strconv.ParseFloat(curStrValue, 64)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		respMetrics.Value = &curValue
+	}
+
+	resp, err := json.Marshal(respMetrics)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_, err = res.Write(resp)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusBadRequest)
+	}
+
 }
 
 func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
@@ -100,33 +129,96 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *Me
 	}
 }
 
-func getMetricHandler(rw http.ResponseWriter, r *http.Request, storage *MemStorage) {
+func getMetricJsonHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
 	if storage == nil {
-		http.Error(rw, "Not found", http.StatusNotFound)
+		http.Error(res, "storage == nil", http.StatusNotFound)
 		return
 	}
-	typeMetric := chi.URLParam(r, typeMetricConst)
-	nameMetric := chi.URLParam(r, nameMetricConst)
+	var metrics Metrics
+	var buf bytes.Buffer
+
+	_, err := buf.ReadFrom(req.Body)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	if err = json.Unmarshal(buf.Bytes(), &metrics); err != nil {
+		http.Error(res, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	typeMetric := metrics.MType
+	nameMetric := metrics.ID
 
 	if typeMetric == "" || nameMetric == "" {
-		http.Error(rw, "Not found", http.StatusNotFound)
+		http.Error(res, "не задан тип или имя метрики", http.StatusNotFound)
+		return
+	}
+
+	curStrValue, exist := storage.getMetric(typeMetric, nameMetric)
+	if !exist {
+		http.Error(res, "метрика не найдена", http.StatusNotFound)
+		return
+
+	}
+	switch typeMetric {
+	case typeMetricCounter:
+		curValue, err := strconv.ParseInt(curStrValue, 10, 64)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusNotFound)
+			return
+		}
+		metrics.Delta = &curValue
+	case typeMetricGauge:
+		curValue, err := strconv.ParseFloat(curStrValue, 64)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusNotFound)
+			return
+		}
+		metrics.Value = &curValue
+	}
+
+	resp, err := json.Marshal(metrics)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusNotFound)
+		return
+	}
+	res.Header().Set("Content-Type", "application/json")
+	_, err = res.Write(resp)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusNotFound)
+	}
+}
+
+func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
+	if storage == nil {
+		http.Error(res, "storage == nil", http.StatusNotFound)
+		return
+	}
+	typeMetric := chi.URLParam(req, typeMetricConst)
+	nameMetric := chi.URLParam(req, nameMetricConst)
+
+	if typeMetric == "" || nameMetric == "" {
+		http.Error(res, "не задан тип или имя метрики", http.StatusNotFound)
 		return
 	}
 
 	currentValue, ok := storage.getMetric(typeMetric, nameMetric)
 	if ok {
-		_, err := rw.Write([]byte(currentValue))
+		_, err := res.Write([]byte(currentValue))
 		if err != nil {
-			logger.Log.Info("Ошибка записи")
+			http.Error(res, "ошибка записи", http.StatusNotFound)
+			return
 		}
 	} else {
-		rw.WriteHeader(http.StatusNotFound)
+		res.WriteHeader(http.StatusNotFound)
 	}
 }
 
-func getNameMetricsHandler(rw http.ResponseWriter, r *http.Request, storage *MemStorage) {
+func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
 	if storage == nil {
-		http.Error(rw, "Not found", http.StatusNotFound)
+		http.Error(res, "storage == nil", http.StatusNotFound)
 		return
 	}
 	var list string
@@ -137,8 +229,9 @@ func getNameMetricsHandler(rw http.ResponseWriter, r *http.Request, storage *Mem
 		list += fmt.Sprintf("<li>%s: %f</li>", key, val)
 	}
 	formFull := fmt.Sprintf(form, list)
-	_, err := io.WriteString(rw, formFull)
+	_, err := io.WriteString(res, formFull)
 	if err != nil {
-		logger.Log.Info("Ошибка записи")
+		http.Error(res, "ошибка записи", http.StatusNotFound)
+		return
 	}
 }

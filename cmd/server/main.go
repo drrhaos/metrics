@@ -21,6 +21,7 @@ const urlGetMetricsConst = "/"
 const urlUpdateMetricConst = "/update/{typeMetric}/{nameMetric}/{valueMetric}"
 const urlUpdateMetricJsonConst = "/update/"
 const urlGetMetricConst = "/value/{typeMetric}/{nameMetric}"
+const urlGetMetricJsonConst = "/value/"
 
 const flagLogLevel = "info"
 
@@ -43,7 +44,7 @@ func main() {
 	}
 
 	r := chi.NewRouter()
-	logger.Log.Info("Running server", zap.String("address", cfg.Address))
+	logger.Log.Info("Сервер запущен", zap.String("адрес", cfg.Address))
 
 	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
 		getNameMetricsHandler(w, r, storage)
@@ -57,8 +58,11 @@ func main() {
 	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
 		getMetricHandler(w, r, storage)
 	})
+	r.Post(urlGetMetricJsonConst, func(w http.ResponseWriter, r *http.Request) {
+		getMetricJsonHandler(w, r, storage)
+	})
 	err := http.ListenAndServe(cfg.Address, logger.RequestLogger(r))
 	if err != nil {
-		logger.Log.Fatal("Error start server")
+		logger.Log.Fatal(err.Error())
 	}
 }

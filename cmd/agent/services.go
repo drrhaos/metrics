@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -9,6 +11,13 @@ import (
 	"sync"
 	"time"
 )
+
+type Metrics struct {
+	ID    string   `json:"id"`              // имя метрики
+	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
+	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+}
 
 func updateMertics(metricsCPU *MemStorage, PollCount int64) {
 	var m runtime.MemStats
@@ -27,9 +36,18 @@ func updateMertics(metricsCPU *MemStorage, PollCount int64) {
 func sendMetrics(endpoint string, metricsCPU *MemStorage) {
 	client := &http.Client{}
 	for nameMetric, valueMetric := range metricsCPU.gauge {
-		urlStr := fmt.Sprintf(urlUpdateGaugeConst, endpoint, nameMetric, valueMetric)
-		r, _ := http.NewRequest(http.MethodPost, urlStr, nil)
-		r.Header.Add("Content-Type", "text/plain")
+		var metric Metrics
+		metric.MType = typeMetricGauge
+		metric.ID = nameMetric
+		metric.Value = &valueMetric
+		urlStr := fmt.Sprintf(urlUpdateJsonConst, endpoint)
+		reqData, err := json.Marshal(metric)
+		if err != nil {
+			log.Println("Ошибка при выполнении запроса", urlStr)
+			return
+		}
+		r, _ := http.NewRequest(http.MethodPost, urlStr, bytes.NewBuffer(reqData))
+		r.Header.Add("Content-Type", "application/json")
 		resp, err := client.Do(r)
 		if err == nil {
 			defer resp.Body.Close()
@@ -39,9 +57,18 @@ func sendMetrics(endpoint string, metricsCPU *MemStorage) {
 	}
 
 	for nameMetric, valueMetric := range metricsCPU.counter {
-		urlStr := fmt.Sprintf(urlUpdateCounterConst, endpoint, nameMetric, valueMetric)
-		r, _ := http.NewRequest(http.MethodPost, urlStr, nil)
-		r.Header.Add("Content-Type", "text/plain")
+		var metric Metrics
+		metric.MType = typeMetricCounter
+		metric.ID = nameMetric
+		metric.Delta = &valueMetric
+		urlStr := fmt.Sprintf(urlUpdateJsonConst, endpoint)
+		reqData, err := json.Marshal(metric)
+		if err != nil {
+			log.Println("Ошибка при выполнении запроса", urlStr)
+			return
+		}
+		r, _ := http.NewRequest(http.MethodPost, urlStr, bytes.NewBuffer(reqData))
+		r.Header.Add("Content-Type", "application/json")
 		resp, err := client.Do(r)
 		if err == nil {
 			defer resp.Body.Close()
