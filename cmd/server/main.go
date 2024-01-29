@@ -46,7 +46,8 @@ func main() {
 
 	r := chi.NewRouter()
 	r.Use(logger.RequestLogger)
-	r.Use(middleware.Compress(9, "application/json", "text/html"))
+	r.Use(middleware.Compress(5, "application/json", "text/html"))
+	r.Use(gzipDecompressMiddleware)
 
 	logger.Log.Info("Сервер запущен", zap.String("адрес", cfg.Address))
 

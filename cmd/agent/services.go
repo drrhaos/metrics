@@ -57,7 +57,7 @@ func sendMetrics(endpoint string, metricsCPU *MemStorage) {
 		}
 		r, _ := http.NewRequest(http.MethodPost, urlStr, buf)
 		r.Header.Set("Content-Type", "application/json")
-		// r.Header.Set("Content-Encoding", "gzip")
+		r.Header.Set("Content-Encoding", "gzip")
 		resp, err := client.Do(r)
 		if err != nil {
 			log.Println(err)
@@ -89,7 +89,7 @@ func sendMetrics(endpoint string, metricsCPU *MemStorage) {
 		}
 		r, _ := http.NewRequest(http.MethodPost, urlStr, buf)
 		r.Header.Set("Content-Type", "application/json")
-		// r.Header.Set("Content-Encoding", "gzip")
+		r.Header.Set("Content-Encoding", "gzip")
 		resp, err := client.Do(r)
 		if err == nil {
 			defer resp.Body.Close()
