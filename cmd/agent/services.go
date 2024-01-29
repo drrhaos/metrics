@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -35,7 +34,11 @@ func updateMertics(metricsCPU *MemStorage, PollCount int64) {
 
 func sendMetrics(endpoint string, metricsCPU *MemStorage) {
 	client := &http.Client{}
-	for nameMetric, valueMetric := range metricsCPU.gauge {
+	currentGauges, ok := metricsCPU.getGauges()
+	if !ok {
+		return
+	}
+	for nameMetric, valueMetric := range currentGauges {
 		var metric Metrics
 		metric.MType = typeMetricGauge
 		metric.ID = nameMetric
@@ -43,20 +46,32 @@ func sendMetrics(endpoint string, metricsCPU *MemStorage) {
 		urlStr := fmt.Sprintf(urlUpdateJSONConst, endpoint)
 		reqData, err := json.Marshal(metric)
 		if err != nil {
-			log.Println("Ошибка при выполнении запроса", urlStr)
+			log.Println(err)
 			return
 		}
-		r, _ := http.NewRequest(http.MethodPost, urlStr, bytes.NewBuffer(reqData))
-		r.Header.Add("Content-Type", "application/json")
-		resp, err := client.Do(r)
-		if err == nil {
-			defer resp.Body.Close()
-		} else {
-			log.Println("Ошибка при выполнении запроса", urlStr)
+
+		buf, err := compressReqData(reqData)
+		if err != nil {
+			log.Println(err)
+			return
 		}
+		r, _ := http.NewRequest(http.MethodPost, urlStr, buf)
+		r.Header.Set("Content-Type", "application/json")
+		// r.Header.Set("Content-Encoding", "gzip")
+		resp, err := client.Do(r)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		defer resp.Body.Close()
+
 	}
 
-	for nameMetric, valueMetric := range metricsCPU.counter {
+	currentCounters, ok := metricsCPU.getCounters()
+	if !ok {
+		return
+	}
+	for nameMetric, valueMetric := range currentCounters {
 		var metric Metrics
 		metric.MType = typeMetricCounter
 		metric.ID = nameMetric
@@ -67,8 +82,14 @@ func sendMetrics(endpoint string, metricsCPU *MemStorage) {
 			log.Println("Ошибка при выполнении запроса", urlStr)
 			return
 		}
-		r, _ := http.NewRequest(http.MethodPost, urlStr, bytes.NewBuffer(reqData))
-		r.Header.Add("Content-Type", "application/json")
+		buf, err := compressReqData(reqData)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		r, _ := http.NewRequest(http.MethodPost, urlStr, buf)
+		r.Header.Set("Content-Type", "application/json")
+		// r.Header.Set("Content-Encoding", "gzip")
 		resp, err := client.Do(r)
 		if err == nil {
 			defer resp.Body.Close()

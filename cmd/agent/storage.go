@@ -22,6 +22,7 @@ func (stat *MemStorage) updateGauge(nameMetric string, valueMetric float64) {
 	defer stat.mut.Unlock()
 	stat.gauge[nameMetric] = valueMetric
 }
+
 func (stat *MemStorage) updateCounter(nameMetric string, valueMetric int64) {
 	if stat == nil {
 		log.Println("Хранилище не может быть nil")
@@ -30,6 +31,26 @@ func (stat *MemStorage) updateCounter(nameMetric string, valueMetric int64) {
 	stat.mut.Lock()
 	defer stat.mut.Unlock()
 	stat.counter[nameMetric] = valueMetric
+}
+
+func (stat *MemStorage) getGauges() (map[string]float64, bool) {
+	if stat == nil {
+		log.Println("Хранилище не может быть nil")
+		return nil, false
+	}
+	stat.mut.Lock()
+	defer stat.mut.Unlock()
+	return stat.gauge, true
+}
+
+func (stat *MemStorage) getCounters() (map[string]int64, bool) {
+	if stat == nil {
+		log.Println("Хранилище не может быть nil")
+		return nil, false
+	}
+	stat.mut.Lock()
+	defer stat.mut.Unlock()
+	return stat.counter, true
 }
 
 func getFloat64MemStats(m runtime.MemStats, name string) (float64, bool) {

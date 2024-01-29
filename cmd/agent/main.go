@@ -10,9 +10,6 @@ const typeMetricGauge = "gauge"
 const randomValueName = "RandomValue"
 const pollCountName = "PollCount"
 
-const urlUpdateCounterConst = "http://%s/update/counter/%s/%d"
-
-const urlUpdateGaugeConst = "http://%s/update/gauge/%s/%f"
 const urlUpdateJSONConst = "http://%s/update/"
 
 var nameGauges = []string{
