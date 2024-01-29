@@ -165,7 +165,7 @@ func Test_getMetricHandler(t *testing.T) {
 			typeReqest: http.MethodGet,
 			want: want{
 				code:  404,
-				value: "не задан тип или имя метрики\n",
+				value: "",
 			},
 		},
 		{
