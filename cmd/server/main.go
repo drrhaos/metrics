@@ -8,6 +8,7 @@ import (
 
 	"github.com/drrhaos/metrics/internal/logger"
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"go.uber.org/zap"
 )
 
@@ -44,6 +45,9 @@ func main() {
 	}
 
 	r := chi.NewRouter()
+	r.Use(logger.RequestLogger)
+	r.Use(middleware.Compress(9, "application/json", "text/html"))
+
 	logger.Log.Info("Сервер запущен", zap.String("адрес", cfg.Address))
 
 	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +65,7 @@ func main() {
 	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
 		getMetricJSONHandler(w, r, storage)
 	})
-	err := http.ListenAndServe(cfg.Address, logger.RequestLogger(r))
+	err := http.ListenAndServe(cfg.Address, r)
 	if err != nil {
 		logger.Log.Fatal(err.Error())
 	}

@@ -30,6 +30,9 @@ type Metrics struct {
 }
 
 func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
+	if storage == nil {
+		panic("Storage nil")
+	}
 	var metrics Metrics
 	var buf bytes.Buffer
 
@@ -59,7 +62,6 @@ func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage
 		}
 		ok = storage.updateGauge(nameMetric, *metrics.Value)
 	}
-	res.Header().Set("Content-Type", "application/json")
 	if ok {
 		res.WriteHeader(http.StatusOK)
 	} else {
@@ -92,6 +94,9 @@ func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage
 }
 
 func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
+	if storage == nil {
+		panic("Storage nil")
+	}
 	typeMetric := chi.URLParam(req, typeMetricConst)
 	nameMetric := chi.URLParam(req, nameMetricConst)
 	valueMetric := chi.URLParam(req, valueMetricConst)
@@ -131,8 +136,7 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *Me
 
 func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
 	if storage == nil {
-		// http.Error(res, "storage == nil", http.StatusNotFound)
-		return
+		panic("Storage nil")
 	}
 	var metrics Metrics
 	var buf bytes.Buffer
@@ -193,8 +197,7 @@ func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *M
 
 func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
 	if storage == nil {
-		// http.Error(res, "storage == nil", http.StatusNotFound)
-		return
+		panic("Storage nil")
 	}
 	typeMetric := chi.URLParam(req, typeMetricConst)
 	nameMetric := chi.URLParam(req, nameMetricConst)
@@ -203,7 +206,6 @@ func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *MemSt
 		res.WriteHeader(http.StatusNotFound)
 		return
 	}
-
 	currentValue, ok := storage.getMetric(typeMetric, nameMetric)
 	if ok {
 		_, err := res.Write([]byte(currentValue))
@@ -211,6 +213,7 @@ func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *MemSt
 			res.WriteHeader(http.StatusNotFound)
 			return
 		}
+		res.WriteHeader(http.StatusOK)
 	} else {
 		res.WriteHeader(http.StatusNotFound)
 	}
@@ -218,8 +221,7 @@ func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *MemSt
 
 func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
 	if storage == nil {
-		// http.Error(res, "storage == nil", http.StatusNotFound)
-		return
+		panic("Storage nil")
 	}
 	var list string
 	for key, val := range storage.counter {
@@ -229,6 +231,7 @@ func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *
 		list += fmt.Sprintf("<li>%s: %f</li>", key, val)
 	}
 	formFull := fmt.Sprintf(form, list)
+	res.Header().Set("Content-Type", "text/html")
 	_, err := io.WriteString(res, formFull)
 	if err != nil {
 		res.WriteHeader(http.StatusNotFound)
