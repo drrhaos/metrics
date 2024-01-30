@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"os"
+
+	"github.com/drrhaos/metrics/internal/logger"
 )
 
 const typeMetricCounter = "counter"
@@ -42,12 +44,19 @@ var nameGauges = []string{
 	"TotalAlloc",
 }
 
-func main() {
+const flagLogLevel = "info"
 
-	cfg, ok := readStartParams()
+var cfg Config
+
+func main() {
+	if err := logger.Initialize(flagLogLevel); err != nil {
+		panic(err)
+	}
+
+	ok := cfg.readStartParams()
 	if !ok {
 		flag.PrintDefaults()
 		os.Exit(0)
 	}
-	collectMetrics(cfg)
+	collectMetrics()
 }

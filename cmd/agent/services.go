@@ -3,12 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"math/rand"
 	"net/http"
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/drrhaos/metrics/internal/logger"
+	"go.uber.org/zap"
 )
 
 type Metrics struct {
@@ -32,8 +34,33 @@ func updateMertics(metricsCPU *MemStorage, PollCount int64) {
 	}
 }
 
-func sendMetrics(endpoint string, metricsCPU *MemStorage) {
+func sendMetric(metric Metrics) {
 	client := &http.Client{}
+
+	urlStr := fmt.Sprintf(urlUpdateJSONConst, cfg.Address)
+	reqData, err := json.Marshal(metric)
+	if err != nil {
+		logger.Log.Warn("Не удалось создать JSON", zap.Error(err))
+		return
+	}
+
+	buf, err := compressReqData(reqData)
+	if err != nil {
+		logger.Log.Warn("Не сжать данные", zap.Error(err))
+		return
+	}
+	r, _ := http.NewRequest(http.MethodPost, urlStr, buf)
+	r.Header.Set("Content-Type", "application/json")
+	r.Header.Set("Content-Encoding", "gzip")
+	resp, err := client.Do(r)
+	if err != nil {
+		logger.Log.Warn("Не удалось отправить запрос", zap.Error(err))
+		return
+	}
+	defer resp.Body.Close()
+}
+
+func sendMetrics(metricsCPU *MemStorage) {
 	currentGauges, ok := metricsCPU.getGauges()
 	if !ok {
 		return
@@ -43,28 +70,7 @@ func sendMetrics(endpoint string, metricsCPU *MemStorage) {
 		metric.MType = typeMetricGauge
 		metric.ID = nameMetric
 		metric.Value = &valueMetric
-		urlStr := fmt.Sprintf(urlUpdateJSONConst, endpoint)
-		reqData, err := json.Marshal(metric)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		buf, err := compressReqData(reqData)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		r, _ := http.NewRequest(http.MethodPost, urlStr, buf)
-		r.Header.Set("Content-Type", "application/json")
-		r.Header.Set("Content-Encoding", "gzip")
-		resp, err := client.Do(r)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		defer resp.Body.Close()
-
+		sendMetric(metric)
 	}
 
 	currentCounters, ok := metricsCPU.getCounters()
@@ -76,30 +82,11 @@ func sendMetrics(endpoint string, metricsCPU *MemStorage) {
 		metric.MType = typeMetricCounter
 		metric.ID = nameMetric
 		metric.Delta = &valueMetric
-		urlStr := fmt.Sprintf(urlUpdateJSONConst, endpoint)
-		reqData, err := json.Marshal(metric)
-		if err != nil {
-			log.Println("Ошибка при выполнении запроса", urlStr)
-			return
-		}
-		buf, err := compressReqData(reqData)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		r, _ := http.NewRequest(http.MethodPost, urlStr, buf)
-		r.Header.Set("Content-Type", "application/json")
-		r.Header.Set("Content-Encoding", "gzip")
-		resp, err := client.Do(r)
-		if err == nil {
-			defer resp.Body.Close()
-		} else {
-			log.Println("Ошибка при выполнении запроса", urlStr)
-		}
+		sendMetric(metric)
 	}
 }
 
-func collectMetrics(cfg Config) {
+func collectMetrics() {
 	metricsCPU := &MemStorage{
 		counter: make(map[string]int64),
 		gauge:   make(map[string]float64),
@@ -118,7 +105,7 @@ func collectMetrics(cfg Config) {
 	go func() {
 		for {
 			time.Sleep(time.Duration(cfg.ReportInterval) * time.Second)
-			sendMetrics(cfg.Address, metricsCPU)
+			sendMetrics(metricsCPU)
 		}
 	}()
 	select {}

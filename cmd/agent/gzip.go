@@ -3,7 +3,9 @@ package main
 import (
 	"bytes"
 	"compress/gzip"
-	"log"
+
+	"github.com/drrhaos/metrics/internal/logger"
+	"go.uber.org/zap"
 )
 
 func compressReqData(reqData []byte) (*bytes.Buffer, error) {
@@ -11,12 +13,12 @@ func compressReqData(reqData []byte) (*bytes.Buffer, error) {
 	zipF := gzip.NewWriter(&buf)
 	_, err := zipF.Write(reqData)
 	if err != nil {
-		log.Println(err)
+		logger.Log.Warn("Ошибка записи данных", zap.Error(err))
 		return nil, err
 	}
 	err = zipF.Close()
 	if err != nil {
-		log.Println(err)
+		logger.Log.Warn("Ошибка сжатия данных", zap.Error(err))
 		return nil, err
 	}
 	return &buf, nil

@@ -2,10 +2,10 @@ package main
 
 import (
 	"flag"
-	"log"
 	"net/url"
 
 	"github.com/caarlos0/env/v6"
+	"github.com/drrhaos/metrics/internal/logger"
 )
 
 type Config struct {
@@ -14,11 +14,10 @@ type Config struct {
 	PollInterval   int64  `env:"POLL_INTERVAL"`
 }
 
-func readStartParams() (Config, bool) {
-	cfg := Config{}
-	err := env.Parse(&cfg)
+func (cfg *Config) readStartParams() bool {
+	err := env.Parse(cfg)
 	if err != nil {
-		log.Printf("Не удалось найти переменные окружения: %v", err)
+		logger.Log.Info("Не удалось найти переменные окружения")
 	}
 
 	address := flag.String("a", "127.0.0.1:8080", "Net address endpoint host:port")
@@ -40,8 +39,8 @@ func readStartParams() (Config, bool) {
 
 	if cfg.PollInterval <= 0 || cfg.ReportInterval <= 0 || errURL != nil {
 		flag.PrintDefaults()
-		return cfg, false
+		return false
 	} else {
-		return cfg, true
+		return true
 	}
 }

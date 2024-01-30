@@ -1,10 +1,11 @@
 package main
 
 import (
-	"log"
 	"reflect"
 	"runtime"
 	"sync"
+
+	"github.com/drrhaos/metrics/internal/logger"
 )
 
 type MemStorage struct {
@@ -15,7 +16,7 @@ type MemStorage struct {
 
 func (stat *MemStorage) updateGauge(nameMetric string, valueMetric float64) {
 	if stat == nil {
-		log.Println("Хранилище не может быть nil")
+		logger.Log.Panic("Хранилище не может быть nil")
 		return
 	}
 	stat.mut.Lock()
@@ -25,7 +26,7 @@ func (stat *MemStorage) updateGauge(nameMetric string, valueMetric float64) {
 
 func (stat *MemStorage) updateCounter(nameMetric string, valueMetric int64) {
 	if stat == nil {
-		log.Println("Хранилище не может быть nil")
+		logger.Log.Panic("Хранилище не может быть nil")
 		return
 	}
 	stat.mut.Lock()
@@ -35,7 +36,7 @@ func (stat *MemStorage) updateCounter(nameMetric string, valueMetric int64) {
 
 func (stat *MemStorage) getGauges() (map[string]float64, bool) {
 	if stat == nil {
-		log.Println("Хранилище не может быть nil")
+		logger.Log.Panic("Хранилище не может быть nil")
 		return nil, false
 	}
 	stat.mut.Lock()
@@ -45,7 +46,7 @@ func (stat *MemStorage) getGauges() (map[string]float64, bool) {
 
 func (stat *MemStorage) getCounters() (map[string]int64, bool) {
 	if stat == nil {
-		log.Println("Хранилище не может быть nil")
+		logger.Log.Panic("Хранилище не может быть nil")
 		return nil, false
 	}
 	stat.mut.Lock()
@@ -64,7 +65,7 @@ func getFloat64MemStats(m runtime.MemStats, name string) (float64, bool) {
 	case reflect.Float64:
 		floatValue = value.Float()
 	default:
-		log.Println("Тип значения не соответствует uint", name)
+		logger.Log.Info("Тип значения не соответствует uint")
 		return floatValue, false
 	}
 	return floatValue, true
