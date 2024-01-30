@@ -67,6 +67,9 @@ func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage
 	} else {
 		res.WriteHeader(http.StatusBadRequest)
 	}
+	if cfg.StoreInterval == 0 {
+		storage.saveMetrics(cfg.FileStoragePath)
+	}
 
 	var respMetrics Metrics
 	curStrValue, exist := storage.getMetric(typeMetric, nameMetric)
@@ -125,6 +128,9 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *Me
 			break
 		}
 		ok = storage.updateGauge(nameMetric, valueFloatMetric)
+	}
+	if cfg.StoreInterval == 0 {
+		storage.saveMetrics(cfg.FileStoragePath)
 	}
 
 	if ok {
@@ -224,10 +230,10 @@ func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *
 		panic("Storage nil")
 	}
 	var list string
-	for key, val := range storage.counter {
+	for key, val := range storage.Counter {
 		list += fmt.Sprintf("<li>%s: %d</li>", key, val)
 	}
-	for key, val := range storage.gauge {
+	for key, val := range storage.Gauge {
 		list += fmt.Sprintf("<li>%s: %f</li>", key, val)
 	}
 	formFull := fmt.Sprintf(form, list)

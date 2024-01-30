@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/drrhaos/metrics/internal/logger"
 	"github.com/go-chi/chi"
@@ -26,8 +27,10 @@ const urlGetMetricJSONConst = "/value/"
 
 const flagLogLevel = "info"
 
+var cfg Config
+
 func main() {
-	cfg, ok := readStartParams()
+	ok := cfg.readStartParams()
 
 	if !ok {
 		flag.PrintDefaults()
@@ -35,13 +38,26 @@ func main() {
 	}
 
 	storage := &MemStorage{
-		counter: make(map[string]int64),
-		gauge:   make(map[string]float64),
+		Counter: make(map[string]int64),
+		Gauge:   make(map[string]float64),
 		mut:     sync.Mutex{},
+	}
+
+	if cfg.Restore {
+		storage.loadMetrics(cfg.FileStoragePath)
 	}
 
 	if err := logger.Initialize(flagLogLevel); err != nil {
 		panic(err)
+	}
+
+	if cfg.StoreInterval != 0 {
+		go func() {
+			for {
+				time.Sleep(time.Duration(cfg.StoreInterval) * time.Second)
+				storage.saveMetrics(cfg.FileStoragePath)
+			}
+		}()
 	}
 
 	r := chi.NewRouter()
@@ -66,8 +82,10 @@ func main() {
 	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
 		getMetricJSONHandler(w, r, storage)
 	})
+
 	err := http.ListenAndServe(cfg.Address, r)
 	if err != nil {
 		logger.Log.Fatal(err.Error())
 	}
+	storage.saveMetrics(cfg.FileStoragePath)
 }
