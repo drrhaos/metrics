@@ -49,6 +49,7 @@ func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage
 
 	typeMetric := metrics.MType
 	nameMetric := metrics.ID
+
 	var ok bool
 	switch typeMetric {
 	case typeMetricCounter:
@@ -94,6 +95,9 @@ func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage
 		res.WriteHeader(http.StatusBadRequest)
 	}
 
+	if cfg.StoreInterval == 0 {
+		storage.saveMetrics(cfg.FileStoragePath)
+	}
 }
 
 func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
@@ -137,6 +141,10 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *Me
 		res.WriteHeader(http.StatusOK)
 	} else {
 		res.WriteHeader(http.StatusBadRequest)
+	}
+
+	if cfg.StoreInterval == 0 {
+		storage.saveMetrics(cfg.FileStoragePath)
 	}
 }
 

@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
 	"github.com/go-chi/chi"
@@ -13,6 +14,7 @@ func Test_updateMetricHandler(t *testing.T) {
 	storage := &MemStorage{
 		Counter: make(map[string]int64),
 		Gauge:   make(map[string]float64),
+		mut:     sync.Mutex{},
 	}
 
 	r := chi.NewRouter()
@@ -114,6 +116,7 @@ func Test_getMetricHandler(t *testing.T) {
 	storage := &MemStorage{
 		Counter: make(map[string]int64),
 		Gauge:   make(map[string]float64),
+		mut:     sync.Mutex{},
 	}
 	storage.updateCounter("testCounter", 10)
 	storage.updateGauge("testGauge", 11.1)
@@ -224,6 +227,7 @@ func Test_getNameMetricsHandler(t *testing.T) {
 	storage := &MemStorage{
 		Counter: make(map[string]int64),
 		Gauge:   make(map[string]float64),
+		mut:     sync.Mutex{},
 	}
 	storage.updateCounter("testCounter", 10)
 	storage.updateGauge("testGauge", 11.1)

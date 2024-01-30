@@ -81,9 +81,6 @@ func (storage *MemStorage) updateCounter(nameMetric string, valueMetric int64) b
 	storage.mut.Lock()
 	defer storage.mut.Unlock()
 	storage.Counter[nameMetric] += valueMetric
-	if cfg.StoreInterval == 0 {
-		storage.saveMetrics(cfg.FileStoragePath)
-	}
 	return true
 }
 
@@ -94,9 +91,6 @@ func (storage *MemStorage) updateGauge(nameMetric string, valueMetric float64) b
 	storage.mut.Lock()
 	defer storage.mut.Unlock()
 	storage.Gauge[nameMetric] = valueMetric
-	if cfg.StoreInterval == 0 {
-		storage.saveMetrics(cfg.FileStoragePath)
-	}
 	return true
 }
 
