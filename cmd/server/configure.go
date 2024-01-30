@@ -16,11 +16,10 @@ type Config struct {
 }
 
 func (cfg *Config) readStartParams() bool {
-	err := env.Parse(&cfg)
+	err := env.Parse(cfg)
 	if err != nil {
 		logger.Log.Info("Не удалось найти переменные окружения ")
 	}
-
 	address := flag.String("a", "127.0.0.1:8080", "Сетевой адрес host:port")
 	storeInterval := flag.Int64("i", 300, "Интервал сохранения показаний")
 	fileStoragePath := flag.String("f", "/tmp/metrics-db.json", "Путь к файлу с показаниями")

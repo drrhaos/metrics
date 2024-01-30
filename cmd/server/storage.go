@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"strconv"
 	"sync"
@@ -20,9 +19,6 @@ func (storage *MemStorage) saveMetrics(filePath string) bool {
 	if storage == nil {
 		return false
 	}
-	storage.mut.Lock()
-	defer storage.mut.Unlock()
-
 	data, err := json.Marshal(storage)
 	if err != nil {
 		logger.Log.Warn("не удалось преобразовать структуру")
@@ -46,7 +42,6 @@ func (storage *MemStorage) loadMetrics(filePath string) bool {
 	if storage == nil {
 		return false
 	}
-	fmt.Println(filePath)
 	file, err := os.OpenFile(filePath, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
 		logger.Log.Warn("не удалось открыть файл")
@@ -83,6 +78,9 @@ func (storage *MemStorage) updateCounter(nameMetric string, valueMetric int64) b
 	storage.mut.Lock()
 	defer storage.mut.Unlock()
 	storage.Counter[nameMetric] += valueMetric
+	if cfg.StoreInterval == 0 {
+		storage.saveMetrics(cfg.FileStoragePath)
+	}
 	return true
 }
 
@@ -93,6 +91,9 @@ func (storage *MemStorage) updateGauge(nameMetric string, valueMetric float64) b
 	storage.mut.Lock()
 	defer storage.mut.Unlock()
 	storage.Gauge[nameMetric] = valueMetric
+	if cfg.StoreInterval == 0 {
+		storage.saveMetrics(cfg.FileStoragePath)
+	}
 	return true
 }
 

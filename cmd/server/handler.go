@@ -61,14 +61,14 @@ func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage
 			break
 		}
 		ok = storage.updateGauge(nameMetric, *metrics.Value)
+	default:
+		res.WriteHeader(http.StatusNotFound)
+		return
 	}
 	if ok {
 		res.WriteHeader(http.StatusOK)
 	} else {
 		res.WriteHeader(http.StatusBadRequest)
-	}
-	if cfg.StoreInterval == 0 {
-		storage.saveMetrics(cfg.FileStoragePath)
 	}
 
 	var respMetrics Metrics
@@ -128,9 +128,9 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *Me
 			break
 		}
 		ok = storage.updateGauge(nameMetric, valueFloatMetric)
-	}
-	if cfg.StoreInterval == 0 {
-		storage.saveMetrics(cfg.FileStoragePath)
+	default:
+		res.WriteHeader(http.StatusNotFound)
+		return
 	}
 
 	if ok {
