@@ -19,6 +19,8 @@ func (storage *MemStorage) saveMetrics(filePath string) bool {
 	if storage == nil {
 		return false
 	}
+	storage.mut.Lock()
+	defer storage.mut.Unlock()
 	data, err := json.Marshal(storage)
 	if err != nil {
 		logger.Log.Warn("не удалось преобразовать структуру")
@@ -42,6 +44,8 @@ func (storage *MemStorage) loadMetrics(filePath string) bool {
 	if storage == nil {
 		return false
 	}
+	storage.mut.Lock()
+	defer storage.mut.Unlock()
 	file, err := os.OpenFile(filePath, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
 		logger.Log.Warn("не удалось открыть файл")
@@ -67,7 +71,6 @@ func (storage *MemStorage) loadMetrics(filePath string) bool {
 		logger.Log.Warn("не удалось преобразовать структуру")
 		return false
 	}
-
 	return true
 }
 
