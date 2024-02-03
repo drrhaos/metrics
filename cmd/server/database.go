@@ -10,7 +10,7 @@ import (
 
 type Database struct {
 	Conn *pgx.Conn
-	Uri  string
+	uri  string
 }
 
 func (db *Database) Close() {
@@ -38,7 +38,7 @@ func (db *Database) Connect(uri string) error {
 		return err
 	}
 	db.Conn = conn
-	db.Uri = uri
+	db.uri = uri
 	logger.Log.Info("Соединение с базой успешно установлено")
 	return nil
 }
