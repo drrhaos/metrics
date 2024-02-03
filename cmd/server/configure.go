@@ -25,7 +25,8 @@ func (cfg *Config) readStartParams() bool {
 	storeInterval := flag.Int64("i", 300, "Интервал сохранения показаний")
 	fileStoragePath := flag.String("f", "/tmp/metrics-db.json", "Путь к файлу с показаниями")
 	restore := flag.Bool("r", true, "Загружать последние сохранения показаний")
-	databaseDsn := flag.String("d", "127.0.0.1:5432", "Сетевой адрес базя данных host:port")
+	databaseDsn := flag.String("d", "postgres://postgres:example@127.0.0.1:5432/postgres?sslmode=disable",
+		"Сетевой адрес базя данных postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable")
 	flag.Parse()
 	if cfg.Address == "" {
 		cfg.Address = *address

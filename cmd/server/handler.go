@@ -252,3 +252,15 @@ func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *
 		return
 	}
 }
+
+func getPing(res http.ResponseWriter, req *http.Request) {
+	if database.IsClosed() {
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if !database.Ping() {
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	res.WriteHeader(http.StatusOK)
+}

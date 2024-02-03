@@ -20,6 +20,7 @@ const nameMetricConst = "nameMetric"
 const valueMetricConst = "valueMetric"
 
 const urlGetMetricsConst = "/"
+const urlGetPing = "/ping"
 const urlUpdateMetricConst = "/update/{typeMetric}/{nameMetric}/{valueMetric}"
 const urlUpdateMetricJSONConst = "/update/"
 const urlGetMetricConst = "/value/{typeMetric}/{nameMetric}"
@@ -28,6 +29,7 @@ const urlGetMetricJSONConst = "/value/"
 const flagLogLevel = "info"
 
 var cfg Config
+var database Database
 
 func main() {
 	ok := cfg.readStartParams()
@@ -51,6 +53,11 @@ func main() {
 		panic(err)
 	}
 
+	if err := database.Connect(cfg.DatabaseDsn); err != nil {
+		logger.Log.Info("Не удалось подключиться к базе данных", zap.Error(err))
+	}
+	defer database.Close()
+
 	if cfg.StoreInterval != 0 {
 		go func() {
 			for {
@@ -70,6 +77,9 @@ func main() {
 	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
 		getNameMetricsHandler(w, r, storage)
 	})
+	r.Get(urlGetPing, func(w http.ResponseWriter, r *http.Request) {
+		getPing(w, r)
+	})
 	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
 		updateMetricHandler(w, r, storage)
 	})
@@ -83,8 +93,7 @@ func main() {
 		getMetricJSONHandler(w, r, storage)
 	})
 
-	err := http.ListenAndServe(cfg.Address, r)
-	if err != nil {
+	if err := http.ListenAndServe(cfg.Address, r); err != nil {
 		logger.Log.Fatal(err.Error())
 	}
 	storage.saveMetrics(cfg.FileStoragePath)
