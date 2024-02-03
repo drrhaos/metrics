@@ -13,6 +13,7 @@ type Config struct {
 	StoreInterval   int64  `env:"STORE_INTERVAL" envDefault:"-1"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	Restore         bool   `env:"RESTORE" envDefault:"true"`
+	DatabaseDsn     string `env:"DATABASE_DSN"`
 }
 
 func (cfg *Config) readStartParams() bool {
@@ -24,6 +25,7 @@ func (cfg *Config) readStartParams() bool {
 	storeInterval := flag.Int64("i", 300, "Интервал сохранения показаний")
 	fileStoragePath := flag.String("f", "/tmp/metrics-db.json", "Путь к файлу с показаниями")
 	restore := flag.Bool("r", true, "Загружать последние сохранения показаний")
+	databaseDsn := flag.String("d", "127.0.0.1:5432", "Сетевой адрес базя данных host:port")
 	flag.Parse()
 	if cfg.Address == "" {
 		cfg.Address = *address
@@ -39,6 +41,10 @@ func (cfg *Config) readStartParams() bool {
 
 	if !cfg.Restore {
 		cfg.Restore = *restore
+	}
+
+	if cfg.DatabaseDsn == "" {
+		cfg.DatabaseDsn = *databaseDsn
 	}
 
 	_, errURL := url.ParseRequestURI("http://" + cfg.Address)
