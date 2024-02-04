@@ -93,24 +93,24 @@ func (storage *MemStorage) UpdateGauge(nameMetric string, valueMetric float64) b
 	return true
 }
 
-func (stat *MemStorage) GetGauges() (map[string]float64, bool) {
-	if stat == nil {
+func (storage *MemStorage) GetGauges() (map[string]float64, bool) {
+	if storage == nil {
 		logger.Log.Panic("Хранилище не может быть nil")
 		return nil, false
 	}
-	stat.Mut.Lock()
-	defer stat.Mut.Unlock()
-	return stat.Gauge, true
+	storage.Mut.Lock()
+	defer storage.Mut.Unlock()
+	return storage.Gauge, true
 }
 
-func (stat *MemStorage) GetCounters() (map[string]int64, bool) {
-	if stat == nil {
+func (storage *MemStorage) GetCounters() (map[string]int64, bool) {
+	if storage == nil {
 		logger.Log.Panic("Хранилище не может быть nil")
 		return nil, false
 	}
-	stat.Mut.Lock()
-	defer stat.Mut.Unlock()
-	return stat.Counter, true
+	storage.Mut.Lock()
+	defer storage.Mut.Unlock()
+	return storage.Counter, true
 }
 
 func (storage *MemStorage) GetCounter(nameMetric string) (currentValue int64, exists bool) {
