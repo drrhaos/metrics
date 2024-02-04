@@ -59,7 +59,8 @@ func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage
 	switch typeMetric {
 	case typeMetricCounter:
 		if metrics.Delta == nil {
-			break
+			res.WriteHeader(http.StatusBadRequest)
+			return
 		}
 		ok = storage.UpdateCounter(nameMetric, *metrics.Delta)
 		curDelta, exist := storage.GetCounter(nameMetric)
@@ -70,7 +71,8 @@ func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage
 
 	case typeMetricGauge:
 		if metrics.Value == nil {
-			break
+			res.WriteHeader(http.StatusBadRequest)
+			return
 		}
 		ok = storage.UpdateGauge(nameMetric, *metrics.Value)
 		curValue, exist := storage.GetGauge(nameMetric)
@@ -78,13 +80,13 @@ func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage
 			respMetrics.Value = &curValue
 		}
 	default:
-		res.WriteHeader(http.StatusNotFound)
+		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if ok {
-		res.WriteHeader(http.StatusOK)
-	} else {
+
+	if !ok {
 		res.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	resp, err := json.Marshal(respMetrics)
@@ -95,11 +97,14 @@ func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage
 	_, err = res.Write(resp)
 	if err != nil {
 		res.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	if cfg.StoreInterval == 0 {
 		storage.SaveMetrics(cfg.FileStoragePath)
 	}
+
+	res.WriteHeader(http.StatusOK)
 }
 
 func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *storage.MemStorage) {
@@ -109,11 +114,6 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *st
 	typeMetric := chi.URLParam(req, typeMetricConst)
 	nameMetric := chi.URLParam(req, nameMetricConst)
 	valueMetric := chi.URLParam(req, valueMetricConst)
-
-	if typeMetric != typeMetricCounter && typeMetric != typeMetricGauge {
-		res.WriteHeader(http.StatusBadRequest)
-		return
-	}
 
 	if nameMetric == "" || valueMetric == "" {
 		res.WriteHeader(http.StatusNotFound)
@@ -125,29 +125,31 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *st
 	case typeMetricCounter:
 		valueIntMetric, err := strconv.ParseInt(valueMetric, 10, 64)
 		if err != nil {
-			break
+			res.WriteHeader(http.StatusBadRequest)
+			return
 		}
 		ok = storage.UpdateCounter(nameMetric, valueIntMetric)
 	case typeMetricGauge:
 		valueFloatMetric, err := strconv.ParseFloat(valueMetric, 64)
 		if err != nil {
-			break
+			res.WriteHeader(http.StatusBadRequest)
+			return
 		}
 		ok = storage.UpdateGauge(nameMetric, valueFloatMetric)
 	default:
-		res.WriteHeader(http.StatusNotFound)
+		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if ok {
-		res.WriteHeader(http.StatusOK)
-	} else {
+	if !ok {
 		res.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	if cfg.StoreInterval == 0 {
 		storage.SaveMetrics(cfg.FileStoragePath)
 	}
+	res.WriteHeader(http.StatusOK)
 }
 
 func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *storage.MemStorage) {
@@ -204,7 +206,9 @@ func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *s
 	_, err = res.Write(resp)
 	if err != nil {
 		res.WriteHeader(http.StatusNotFound)
+		return
 	}
+	res.WriteHeader(http.StatusOK)
 }
 
 func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *storage.MemStorage) {
@@ -235,16 +239,17 @@ func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *stora
 		return
 	}
 
-	if ok {
-		_, err := res.Write([]byte(currentValue))
-		if err != nil {
-			res.WriteHeader(http.StatusNotFound)
-			return
-		}
-		res.WriteHeader(http.StatusOK)
-	} else {
+	if !ok {
 		res.WriteHeader(http.StatusNotFound)
+		return
 	}
+
+	_, err := res.Write([]byte(currentValue))
+	if err != nil {
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
+	res.WriteHeader(http.StatusOK)
 }
 
 func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *storage.MemStorage) {
@@ -265,6 +270,7 @@ func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *
 		res.WriteHeader(http.StatusNotFound)
 		return
 	}
+	res.WriteHeader(http.StatusOK)
 }
 
 func getPing(res http.ResponseWriter, req *http.Request) {
