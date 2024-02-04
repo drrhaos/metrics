@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/drrhaos/metrics/internal/storage"
 	"github.com/go-chi/chi"
 )
 
@@ -29,7 +30,7 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
-func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
+func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *storage.MemStorage) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -51,17 +52,31 @@ func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage
 	nameMetric := metrics.ID
 
 	var ok bool
+	var respMetrics Metrics
+	respMetrics.ID = nameMetric
+	respMetrics.MType = typeMetric
+
 	switch typeMetric {
 	case typeMetricCounter:
 		if metrics.Delta == nil {
 			break
 		}
-		ok = storage.updateCounter(nameMetric, *metrics.Delta)
+		ok = storage.UpdateCounter(nameMetric, *metrics.Delta)
+		curDelta, exist := storage.GetCounter(nameMetric)
+		if exist {
+			curValue := float64(curDelta)
+			respMetrics.Value = &curValue
+		}
+
 	case typeMetricGauge:
 		if metrics.Value == nil {
 			break
 		}
-		ok = storage.updateGauge(nameMetric, *metrics.Value)
+		ok = storage.UpdateGauge(nameMetric, *metrics.Value)
+		curValue, exist := storage.GetGauge(nameMetric)
+		if exist {
+			respMetrics.Value = &curValue
+		}
 	default:
 		res.WriteHeader(http.StatusNotFound)
 		return
@@ -70,19 +85,6 @@ func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage
 		res.WriteHeader(http.StatusOK)
 	} else {
 		res.WriteHeader(http.StatusBadRequest)
-	}
-
-	var respMetrics Metrics
-	curStrValue, exist := storage.getMetric(typeMetric, nameMetric)
-	if exist {
-		respMetrics.ID = nameMetric
-		respMetrics.MType = typeMetric
-		curValue, err := strconv.ParseFloat(curStrValue, 64)
-		if err != nil {
-			res.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		respMetrics.Value = &curValue
 	}
 
 	resp, err := json.Marshal(respMetrics)
@@ -96,11 +98,11 @@ func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage
 	}
 
 	if cfg.StoreInterval == 0 {
-		storage.saveMetrics(cfg.FileStoragePath)
+		storage.SaveMetrics(cfg.FileStoragePath)
 	}
 }
 
-func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
+func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *storage.MemStorage) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -125,13 +127,13 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *Me
 		if err != nil {
 			break
 		}
-		ok = storage.updateCounter(nameMetric, valueIntMetric)
+		ok = storage.UpdateCounter(nameMetric, valueIntMetric)
 	case typeMetricGauge:
 		valueFloatMetric, err := strconv.ParseFloat(valueMetric, 64)
 		if err != nil {
 			break
 		}
-		ok = storage.updateGauge(nameMetric, valueFloatMetric)
+		ok = storage.UpdateGauge(nameMetric, valueFloatMetric)
 	default:
 		res.WriteHeader(http.StatusNotFound)
 		return
@@ -144,11 +146,11 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *Me
 	}
 
 	if cfg.StoreInterval == 0 {
-		storage.saveMetrics(cfg.FileStoragePath)
+		storage.SaveMetrics(cfg.FileStoragePath)
 	}
 }
 
-func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
+func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *storage.MemStorage) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -174,27 +176,23 @@ func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *M
 		return
 	}
 
-	curStrValue, exist := storage.getMetric(typeMetric, nameMetric)
-	if !exist {
-		res.WriteHeader(http.StatusNotFound)
-		return
-
-	}
 	switch typeMetric {
 	case typeMetricCounter:
-		curValue, err := strconv.ParseInt(curStrValue, 10, 64)
-		if err != nil {
+		curDelta, exist := storage.GetCounter(nameMetric)
+		if !exist {
 			res.WriteHeader(http.StatusNotFound)
 			return
+
 		}
-		metrics.Delta = &curValue
+		metrics.Delta = &curDelta
 	case typeMetricGauge:
-		curValue, err := strconv.ParseFloat(curStrValue, 64)
-		if err != nil {
+		curGauge, exist := storage.GetGauge(nameMetric)
+		if !exist {
 			res.WriteHeader(http.StatusNotFound)
 			return
+
 		}
-		metrics.Value = &curValue
+		metrics.Value = &curGauge
 	}
 
 	resp, err := json.Marshal(metrics)
@@ -209,7 +207,7 @@ func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *M
 	}
 }
 
-func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
+func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *storage.MemStorage) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -220,7 +218,23 @@ func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *MemSt
 		res.WriteHeader(http.StatusNotFound)
 		return
 	}
-	currentValue, ok := storage.getMetric(typeMetric, nameMetric)
+
+	var ok bool
+	var currentValue string
+	switch typeMetric {
+	case typeMetricCounter:
+		var curDelta int64
+		curDelta, ok = storage.GetCounter(nameMetric)
+		currentValue = strconv.FormatInt(curDelta, 10)
+	case typeMetricGauge:
+		var curValue float64
+		curValue, ok = storage.GetGauge(nameMetric)
+		currentValue = strconv.FormatFloat(curValue, 'f', -1, 64)
+	default:
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
+
 	if ok {
 		_, err := res.Write([]byte(currentValue))
 		if err != nil {
@@ -233,7 +247,7 @@ func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *MemSt
 	}
 }
 
-func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *MemStorage) {
+func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *storage.MemStorage) {
 	if storage == nil {
 		panic("Storage nil")
 	}

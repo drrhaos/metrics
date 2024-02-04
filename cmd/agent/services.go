@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"reflect"
 	"runtime"
 	"sync"
 	"time"
 
 	"github.com/drrhaos/metrics/internal/logger"
+	"github.com/drrhaos/metrics/internal/storage"
 	"go.uber.org/zap"
 )
 
@@ -20,16 +22,33 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
-func updateMertics(metricsCPU *MemStorage, PollCount int64) {
+func getFloat64MemStats(m runtime.MemStats, name string) (float64, bool) {
+	value := reflect.ValueOf(m).FieldByName(name)
+	var floatValue float64
+	switch value.Kind() {
+	case reflect.Uint64:
+		floatValue = float64(value.Uint())
+	case reflect.Uint32:
+		floatValue = float64(value.Uint())
+	case reflect.Float64:
+		floatValue = value.Float()
+	default:
+		logger.Log.Info("Тип значения не соответствует uint")
+		return floatValue, false
+	}
+	return floatValue, true
+}
+
+func updateMertics(metricsCPU *storage.MemStorage, PollCount int64) {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	metricsCPU.updateGauge(randomValueName, rand.Float64())
-	metricsCPU.updateCounter(pollCountName, PollCount)
+	metricsCPU.UpdateGauge(randomValueName, rand.Float64())
+	metricsCPU.UpdateCounter(pollCountName, PollCount)
 
 	for _, name := range nameGauges {
 		floatValue, ok := getFloat64MemStats(m, name)
 		if ok {
-			metricsCPU.updateGauge(name, floatValue)
+			metricsCPU.UpdateGauge(name, floatValue)
 		}
 	}
 }
@@ -60,8 +79,8 @@ func sendMetric(metric Metrics) {
 	defer resp.Body.Close()
 }
 
-func sendMetrics(metricsCPU *MemStorage) {
-	currentGauges, ok := metricsCPU.getGauges()
+func sendMetrics(metricsCPU *storage.MemStorage) {
+	currentGauges, ok := metricsCPU.GetGauges()
 	if !ok {
 		return
 	}
@@ -73,7 +92,7 @@ func sendMetrics(metricsCPU *MemStorage) {
 		sendMetric(metric)
 	}
 
-	currentCounters, ok := metricsCPU.getCounters()
+	currentCounters, ok := metricsCPU.GetCounters()
 	if !ok {
 		return
 	}
@@ -87,10 +106,10 @@ func sendMetrics(metricsCPU *MemStorage) {
 }
 
 func collectMetrics() {
-	metricsCPU := &MemStorage{
-		counter: make(map[string]int64),
-		gauge:   make(map[string]float64),
-		mut:     sync.Mutex{},
+	metricsCPU := &storage.MemStorage{
+		Counter: make(map[string]int64),
+		Gauge:   make(map[string]float64),
+		Mut:     sync.Mutex{},
 	}
 
 	go func() {

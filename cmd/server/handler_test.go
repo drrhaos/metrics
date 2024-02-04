@@ -6,15 +6,16 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/drrhaos/metrics/internal/storage"
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_updateMetricHandler(t *testing.T) {
-	storage := &MemStorage{
+	storage := &storage.MemStorage{
 		Counter: make(map[string]int64),
 		Gauge:   make(map[string]float64),
-		mut:     sync.Mutex{},
+		Mut:     sync.Mutex{},
 	}
 
 	r := chi.NewRouter()
@@ -113,14 +114,14 @@ func Test_updateMetricHandler(t *testing.T) {
 }
 
 func Test_getMetricHandler(t *testing.T) {
-	storage := &MemStorage{
+	storage := &storage.MemStorage{
 		Counter: make(map[string]int64),
 		Gauge:   make(map[string]float64),
-		mut:     sync.Mutex{},
+		Mut:     sync.Mutex{},
 	}
-	storage.updateCounter("testCounter", 10)
-	storage.updateGauge("testGauge", 11.1)
-	storage.updateGauge("testGauge2", 12.1)
+	storage.UpdateCounter("testCounter", 10)
+	storage.UpdateGauge("testGauge", 11.1)
+	storage.UpdateGauge("testGauge2", 12.1)
 
 	r := chi.NewRouter()
 
@@ -224,14 +225,14 @@ func Test_getMetricHandler(t *testing.T) {
 }
 
 func Test_getNameMetricsHandler(t *testing.T) {
-	storage := &MemStorage{
+	storage := &storage.MemStorage{
 		Counter: make(map[string]int64),
 		Gauge:   make(map[string]float64),
-		mut:     sync.Mutex{},
+		Mut:     sync.Mutex{},
 	}
-	storage.updateCounter("testCounter", 10)
-	storage.updateGauge("testGauge", 11.1)
-	storage.updateGauge("testGauge2", 12.1)
+	storage.UpdateCounter("testCounter", 10)
+	storage.UpdateGauge("testGauge", 11.1)
+	storage.UpdateGauge("testGauge2", 12.1)
 
 	r := chi.NewRouter()
 

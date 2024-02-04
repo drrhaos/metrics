@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/drrhaos/metrics/internal/logger"
+	"github.com/drrhaos/metrics/internal/storage"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"go.uber.org/zap"
@@ -39,14 +40,14 @@ func main() {
 		os.Exit(0)
 	}
 
-	storage := &MemStorage{
+	storage := &storage.MemStorage{
 		Counter: make(map[string]int64),
 		Gauge:   make(map[string]float64),
-		mut:     sync.Mutex{},
+		Mut:     sync.Mutex{},
 	}
 
 	if cfg.Restore {
-		storage.loadMetrics(cfg.FileStoragePath)
+		storage.LoadMetrics(cfg.FileStoragePath)
 	}
 
 	if err := logger.Initialize(flagLogLevel); err != nil {
@@ -62,7 +63,7 @@ func main() {
 		go func() {
 			for {
 				time.Sleep(time.Duration(cfg.StoreInterval) * time.Second)
-				storage.saveMetrics(cfg.FileStoragePath)
+				storage.SaveMetrics(cfg.FileStoragePath)
 			}
 		}()
 	}
@@ -96,5 +97,5 @@ func main() {
 	if err := http.ListenAndServe(cfg.Address, r); err != nil {
 		logger.Log.Fatal(err.Error())
 	}
-	storage.saveMetrics(cfg.FileStoragePath)
+	storage.SaveMetrics(cfg.FileStoragePath)
 }
