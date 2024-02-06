@@ -4,11 +4,9 @@ import (
 	"flag"
 	"net/http"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/drrhaos/metrics/internal/logger"
-	"github.com/drrhaos/metrics/internal/storage"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"go.uber.org/zap"
@@ -30,7 +28,6 @@ const urlGetMetricJSONConst = "/value/"
 const flagLogLevel = "info"
 
 var cfg Config
-var database Database
 
 func main() {
 	ok := cfg.readStartParams()
@@ -40,30 +37,21 @@ func main() {
 		os.Exit(0)
 	}
 
-	storage := &storage.MemStorage{
-		Counter: make(map[string]int64),
-		Gauge:   make(map[string]float64),
-		Mut:     sync.Mutex{},
-	}
+	stMetrics := NewSwitchStorage()
 
 	if cfg.Restore {
-		storage.LoadMetrics(cfg.FileStoragePath)
+		stMetrics.LoadMetrics(cfg.FileStoragePath)
 	}
 
 	if err := logger.Initialize(flagLogLevel); err != nil {
 		panic(err)
 	}
 
-	if err := database.Connect(cfg.DatabaseDsn); err != nil {
-		logger.Log.Info("Не удалось подключиться к базе данных", zap.Error(err))
-	}
-	defer database.Close()
-
 	if cfg.StoreInterval != 0 {
 		go func() {
 			for {
 				time.Sleep(time.Duration(cfg.StoreInterval) * time.Second)
-				storage.SaveMetrics(cfg.FileStoragePath)
+				stMetrics.SaveMetrics(cfg.FileStoragePath)
 			}
 		}()
 	}
@@ -76,26 +64,26 @@ func main() {
 	logger.Log.Info("Сервер запущен", zap.String("адрес", cfg.Address))
 
 	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
-		getNameMetricsHandler(w, r, storage)
+		getNameMetricsHandler(w, r, stMetrics)
 	})
 	r.Get(urlGetPing, func(w http.ResponseWriter, r *http.Request) {
-		getPing(w, r)
+		getPing(w, r, stMetrics)
 	})
 	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
-		updateMetricHandler(w, r, storage)
+		updateMetricHandler(w, r, stMetrics)
 	})
 	r.Post(urlUpdateMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
-		updateMetricJSONHandler(w, r, storage)
+		updateMetricJSONHandler(w, r, stMetrics)
 	})
 	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
-		getMetricHandler(w, r, storage)
+		getMetricHandler(w, r, stMetrics)
 	})
 	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
-		getMetricJSONHandler(w, r, storage)
+		getMetricJSONHandler(w, r, stMetrics)
 	})
 
 	if err := http.ListenAndServe(cfg.Address, r); err != nil {
 		logger.Log.Fatal(err.Error())
 	}
-	storage.SaveMetrics(cfg.FileStoragePath)
+	stMetrics.SaveMetrics(cfg.FileStoragePath)
 }

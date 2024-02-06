@@ -3,20 +3,15 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
-	"sync"
 	"testing"
 
-	"github.com/drrhaos/metrics/internal/storage"
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_updateMetricHandler(t *testing.T) {
-	storage := &storage.MemStorage{
-		Counter: make(map[string]int64),
-		Gauge:   make(map[string]float64),
-		Mut:     sync.Mutex{},
-	}
+
+	storage := NewSwitchStorage()
 
 	r := chi.NewRouter()
 
@@ -114,11 +109,7 @@ func Test_updateMetricHandler(t *testing.T) {
 }
 
 func Test_getMetricHandler(t *testing.T) {
-	storage := &storage.MemStorage{
-		Counter: make(map[string]int64),
-		Gauge:   make(map[string]float64),
-		Mut:     sync.Mutex{},
-	}
+	storage := NewSwitchStorage()
 	storage.UpdateCounter("testCounter", 10)
 	storage.UpdateGauge("testGauge", 11.1)
 	storage.UpdateGauge("testGauge2", 12.1)
@@ -225,11 +216,7 @@ func Test_getMetricHandler(t *testing.T) {
 }
 
 func Test_getNameMetricsHandler(t *testing.T) {
-	storage := &storage.MemStorage{
-		Counter: make(map[string]int64),
-		Gauge:   make(map[string]float64),
-		Mut:     sync.Mutex{},
-	}
+	storage := NewSwitchStorage()
 	storage.UpdateCounter("testCounter", 10)
 	storage.UpdateGauge("testGauge", 11.1)
 	storage.UpdateGauge("testGauge2", 12.1)

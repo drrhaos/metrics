@@ -14,6 +14,14 @@ type MemStorage struct {
 	Mut     sync.Mutex
 }
 
+func NewStorage() *MemStorage {
+	return &MemStorage{
+		Counter: make(map[string]int64),
+		Gauge:   make(map[string]float64),
+		Mut:     sync.Mutex{},
+	}
+}
+
 func (storage *MemStorage) SaveMetrics(filePath string) bool {
 	if storage == nil {
 		return false

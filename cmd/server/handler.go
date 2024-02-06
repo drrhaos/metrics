@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/drrhaos/metrics/internal/storage"
 	"github.com/go-chi/chi"
 )
 
@@ -30,7 +29,7 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
-func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *storage.MemStorage) {
+func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *SwitchStorage) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -107,7 +106,7 @@ func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage
 	res.WriteHeader(http.StatusOK)
 }
 
-func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *storage.MemStorage) {
+func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *SwitchStorage) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -152,7 +151,7 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *st
 	res.WriteHeader(http.StatusOK)
 }
 
-func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *storage.MemStorage) {
+func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *SwitchStorage) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -211,7 +210,7 @@ func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *s
 	res.WriteHeader(http.StatusOK)
 }
 
-func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *storage.MemStorage) {
+func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *SwitchStorage) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -252,15 +251,26 @@ func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *stora
 	res.WriteHeader(http.StatusOK)
 }
 
-func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *storage.MemStorage) {
+func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *SwitchStorage) {
 	if storage == nil {
 		panic("Storage nil")
 	}
 	var list string
-	for key, val := range storage.Counter {
+	counters, ok := storage.GetCounters()
+	if !ok {
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
+	for key, val := range counters {
 		list += fmt.Sprintf("<li>%s: %d</li>", key, val)
 	}
-	for key, val := range storage.Gauge {
+
+	gauges, ok := storage.GetGauges()
+	if !ok {
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
+	for key, val := range gauges {
 		list += fmt.Sprintf("<li>%s: %f</li>", key, val)
 	}
 	formFull := fmt.Sprintf(form, list)
@@ -273,12 +283,12 @@ func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *
 	res.WriteHeader(http.StatusOK)
 }
 
-func getPing(res http.ResponseWriter, req *http.Request) {
-	if database.IsClosed() {
+func getPing(res http.ResponseWriter, req *http.Request, storage *SwitchStorage) {
+	if storage.DB.IsClosed() {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if !database.Ping() {
+	if !storage.DB.Ping() {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
