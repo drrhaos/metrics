@@ -73,7 +73,7 @@ func (db *Database) Migrations() error {
 	return nil
 }
 
-func (db *Database) UpdateGauge(nameMetric string, valueMetric float64) error {
+func (db *Database) UpdateGauge(nameMetric string, valueMetric float64) bool {
 	_, err := db.Conn.Exec(context.Background(),
 		`INSERT INTO gauges (name, value)
 		VALUES ($1, $2)
@@ -81,12 +81,12 @@ func (db *Database) UpdateGauge(nameMetric string, valueMetric float64) error {
 		SET value = EXCLUDED.value`, nameMetric, valueMetric)
 	if err != nil {
 		logger.Log.Warn("Не удалось обновить значение", zap.Error(err))
-		return err
+		return false
 	}
-	return nil
+	return true
 }
 
-func (db *Database) UpdateCounter(nameMetric string, valueMetric int64) error {
+func (db *Database) UpdateCounter(nameMetric string, valueMetric int64) bool {
 	_, err := db.Conn.Exec(context.Background(),
 		`INSERT INTO counters (name, value)
 		VALUES ($1, $2)
@@ -94,9 +94,9 @@ func (db *Database) UpdateCounter(nameMetric string, valueMetric int64) error {
 		SET value = EXCLUDED.value`, nameMetric, valueMetric)
 	if err != nil {
 		logger.Log.Warn("Не удалось обновить значение", zap.Error(err))
-		return err
+		return false
 	}
-	return nil
+	return true
 }
 
 func (db *Database) GetGauge(nameMetric string) (valueMetric float64, exists bool) {

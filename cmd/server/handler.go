@@ -29,7 +29,7 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
-func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *SwitchStorage) {
+func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *RouterStorage) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -106,7 +106,7 @@ func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage
 	res.WriteHeader(http.StatusOK)
 }
 
-func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *SwitchStorage) {
+func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *RouterStorage) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -151,7 +151,7 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *Sw
 	res.WriteHeader(http.StatusOK)
 }
 
-func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *SwitchStorage) {
+func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *RouterStorage) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -210,7 +210,7 @@ func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *S
 	res.WriteHeader(http.StatusOK)
 }
 
-func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *SwitchStorage) {
+func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *RouterStorage) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -251,7 +251,7 @@ func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *Switc
 	res.WriteHeader(http.StatusOK)
 }
 
-func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *SwitchStorage) {
+func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *RouterStorage) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -283,7 +283,7 @@ func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *
 	res.WriteHeader(http.StatusOK)
 }
 
-func getPing(res http.ResponseWriter, req *http.Request, storage *SwitchStorage) {
+func getPing(res http.ResponseWriter, req *http.Request, storage *RouterStorage) {
 	if storage.DB.IsClosed() {
 		res.WriteHeader(http.StatusInternalServerError)
 		return

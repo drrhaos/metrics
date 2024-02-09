@@ -37,7 +37,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	stMetrics := NewSwitchStorage()
+	stMetrics := NewRouterStorage()
 
 	if cfg.Restore {
 		stMetrics.LoadMetrics(cfg.FileStoragePath)
