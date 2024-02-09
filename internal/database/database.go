@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/drrhaos/metrics/internal/logger"
 	"github.com/golang-migrate/migrate/v4"
@@ -36,7 +35,6 @@ func (db *Database) IsClosed() bool {
 
 func (db *Database) Ping() bool {
 	if err := db.Conn.Ping(context.Background()); err != nil {
-		fmt.Println(err)
 		return false
 	}
 	return true
