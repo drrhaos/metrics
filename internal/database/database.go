@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/drrhaos/metrics/internal/logger"
 	"github.com/golang-migrate/migrate/v4"
@@ -12,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const pathMigrationsConst = "file://./migrations/"
+const pathMigrationsConst = "file://%s/migrations/"
 
 type Database struct {
 	Conn *pgx.Conn
@@ -45,6 +46,7 @@ func (db *Database) Ping() bool {
 func (db *Database) Connect(uri string) error {
 	conn, err := pgx.Connect(context.Background(), uri)
 	if err != nil {
+		logger.Log.Info("Не удалось установить соединение с базой данных", zap.Error(err))
 		return err
 	}
 	db.Conn = conn
@@ -54,8 +56,15 @@ func (db *Database) Connect(uri string) error {
 }
 
 func (db *Database) Migrations() error {
+	dir, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	pathMigrations := fmt.Sprintf(pathMigrationsConst, dir)
 	m, err := migrate.New(
-		pathMigrationsConst,
+		pathMigrations,
 		db.uri)
 	if err != nil {
 		logger.Log.Warn("Ошибка создания миграции", zap.Error(err))
