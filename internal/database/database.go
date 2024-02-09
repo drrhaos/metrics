@@ -2,6 +2,9 @@ package database
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/drrhaos/metrics/internal/logger"
 	"github.com/golang-migrate/migrate/v4"
@@ -11,7 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const pathMigrationsConst = "file://./migrations/"
+const pathMigrationsConst = "file://%s/migrations/"
 
 type Database struct {
 	Conn *pgx.Conn
@@ -53,8 +56,16 @@ func (db *Database) Connect(uri string) error {
 }
 
 func (db *Database) Migrations() error {
+	dir, err := os.Getwd()
+	if err != nil {
+		logger.Log.Info("не удалось получить базовый путь", zap.Error(err))
+		return err
+	}
+	pathMigrationsConst := filepath.Join(dir, "migrations")
+	pathMigrations := fmt.Sprintf(pathMigrationsConst, dir)
+
 	m, err := migrate.New(
-		pathMigrationsConst,
+		pathMigrations,
 		db.uri)
 	if err != nil {
 		logger.Log.Warn("Ошибка создания миграции", zap.Error(err))
