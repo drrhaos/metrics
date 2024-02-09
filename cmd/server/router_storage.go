@@ -17,9 +17,14 @@ func NewRouterStorage() *RouterStorage {
 	if cfg.DatabaseDsn != "" {
 		switchStorage.DB = *database.NewDatabase()
 		err := switchStorage.DB.Connect(cfg.DatabaseDsn)
-		if err == nil {
-			switchStorage.usageDB = true
+		if err != nil {
+			panic(err)
 		}
+		err = switchStorage.DB.Migrations()
+		if err != nil {
+			panic(err)
+		}
+		switchStorage.usageDB = true
 	}
 	return switchStorage
 }

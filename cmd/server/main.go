@@ -37,14 +37,14 @@ func main() {
 		os.Exit(0)
 	}
 
+	if err := logger.Initialize(flagLogLevel); err != nil {
+		panic(err)
+	}
+
 	stMetrics := NewRouterStorage()
 
 	if cfg.Restore {
 		stMetrics.LoadMetrics(cfg.FileStoragePath)
-	}
-
-	if err := logger.Initialize(flagLogLevel); err != nil {
-		panic(err)
 	}
 
 	if cfg.StoreInterval != 0 {
