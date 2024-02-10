@@ -2,12 +2,8 @@ package database
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/drrhaos/metrics/internal/logger"
-	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5"
@@ -56,30 +52,45 @@ func (db *Database) Connect(uri string) error {
 }
 
 func (db *Database) Migrations() error {
-	dir, err := os.Getwd()
+	var exist bool
+	err := db.Conn.QueryRow(context.Background(),
+		`SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'counters')`).Scan(&exist)
 	if err != nil {
-		logger.Log.Info("не удалось получить базовый путь", zap.Error(err))
+		logger.Log.Warn("Не удалось выполнить запрос", zap.Error(err))
 		return err
 	}
-	pathMigrationsConst := filepath.Join(dir, "migrations")
-	pathMigrations := fmt.Sprintf(pathMigrationsConst, dir)
-
-	m, err := migrate.New(
-		pathMigrations,
-		db.uri)
-	if err != nil {
-		logger.Log.Warn("Ошибка создания миграции", zap.Error(err))
-		return err
-	}
-
-	if err := m.Up(); err != nil {
-		if err.Error() == "no change" {
-			logger.Log.Info("Нет миграций для применения")
-		} else {
-			logger.Log.Warn("Ошибка применения миграции", zap.Error(err))
+	if !exist {
+		_, err := db.Conn.Exec(context.Background(),
+			`CREATE TABLE counters (
+				"id" SERIAL PRIMARY KEY,
+				"name" character(40) NOT NULL UNIQUE,
+				"value" integer NOT NULL
+			)`)
+		if err != nil {
+			logger.Log.Warn("Не удалось создать таблицу", zap.Error(err))
 			return err
 		}
 	}
+
+	err = db.Conn.QueryRow(context.Background(),
+		`SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'gauges')`).Scan(&exist)
+	if err != nil {
+		logger.Log.Warn("Не удалось выполнить запрос", zap.Error(err))
+		return err
+	}
+	if !exist {
+		_, err := db.Conn.Exec(context.Background(),
+			`CREATE TABLE gauges (
+				"id" SERIAL PRIMARY KEY,
+				"name" character(40) NOT NULL UNIQUE,
+				"value" double precision NOT NULL
+			)`)
+		if err != nil {
+			logger.Log.Warn("Не удалось создать таблицу", zap.Error(err))
+			return err
+		}
+	}
+
 	return nil
 }
 
