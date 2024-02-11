@@ -10,8 +10,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const pathMigrationsConst = "file://%s/migrations/"
-
 type Database struct {
 	Conn *pgx.Conn
 	uri  string
@@ -42,12 +40,10 @@ func (db *Database) Ping() bool {
 func (db *Database) Connect(uri string) error {
 	conn, err := pgx.Connect(context.Background(), uri)
 	if err != nil {
-		logger.Log.Info("Не удалось установить соединение с базой данных", zap.Error(err))
 		return err
 	}
 	db.Conn = conn
 	db.uri = uri
-	logger.Log.Info("Соединение с базой успешно установлено")
 	return nil
 }
 
@@ -56,7 +52,6 @@ func (db *Database) Migrations() error {
 	err := db.Conn.QueryRow(context.Background(),
 		`SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'counters')`).Scan(&exist)
 	if err != nil {
-		logger.Log.Warn("Не удалось выполнить запрос", zap.Error(err))
 		return err
 	}
 	if !exist {
@@ -67,7 +62,6 @@ func (db *Database) Migrations() error {
 				"value" integer NOT NULL
 			)`)
 		if err != nil {
-			logger.Log.Warn("Не удалось создать таблицу", zap.Error(err))
 			return err
 		}
 	}
@@ -75,7 +69,6 @@ func (db *Database) Migrations() error {
 	err = db.Conn.QueryRow(context.Background(),
 		`SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'gauges')`).Scan(&exist)
 	if err != nil {
-		logger.Log.Warn("Не удалось выполнить запрос", zap.Error(err))
 		return err
 	}
 	if !exist {
@@ -86,7 +79,6 @@ func (db *Database) Migrations() error {
 				"value" double precision NOT NULL
 			)`)
 		if err != nil {
-			logger.Log.Warn("Не удалось создать таблицу", zap.Error(err))
 			return err
 		}
 	}
@@ -108,6 +100,11 @@ func (db *Database) UpdateGauge(nameMetric string, valueMetric float64) bool {
 }
 
 func (db *Database) UpdateCounter(nameMetric string, valueMetric int64) bool {
+	currentValue, exist := db.GetCounter(nameMetric)
+	if exist {
+		valueMetric += currentValue
+	}
+
 	_, err := db.Conn.Exec(context.Background(),
 		`INSERT INTO counters (name, value)
 		VALUES ($1, $2)
@@ -137,6 +134,7 @@ func (db *Database) GetCounter(nameMetric string) (valueMetric int64, exists boo
 		`SELECT value
 		FROM counters
 		WHERE name = $1`, nameMetric).Scan(&valueMetric)
+
 	if err != nil {
 		logger.Log.Warn("Не удалось получить значение", zap.Error(err))
 		return valueMetric, false

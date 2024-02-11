@@ -53,11 +53,12 @@ func updateMertics(metricsCPU *storage.MemStorage, PollCount int64) {
 	}
 }
 
-func sendMetric(metric Metrics) {
+func sendAllMetric(metrics []Metrics) {
 	client := &http.Client{}
 
-	urlStr := fmt.Sprintf(urlUpdateJSONConst, cfg.Address)
-	reqData, err := json.Marshal(metric)
+	urlStr := fmt.Sprintf(urlUpdateMetricsJSONConst, cfg.Address)
+	reqData, err := json.Marshal(metrics)
+
 	if err != nil {
 		logger.Log.Warn("Не удалось создать JSON", zap.Error(err))
 		return
@@ -84,12 +85,11 @@ func sendMetrics(metricsCPU *storage.MemStorage) {
 	if !ok {
 		return
 	}
+	var metrics []Metrics
+
 	for nameMetric, valueMetric := range currentGauges {
-		var metric Metrics
-		metric.MType = typeMetricGauge
-		metric.ID = nameMetric
-		metric.Value = &valueMetric
-		sendMetric(metric)
+		hd := valueMetric
+		metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricGauge, Value: &hd})
 	}
 
 	currentCounters, ok := metricsCPU.GetCounters()
@@ -97,12 +97,10 @@ func sendMetrics(metricsCPU *storage.MemStorage) {
 		return
 	}
 	for nameMetric, valueMetric := range currentCounters {
-		var metric Metrics
-		metric.MType = typeMetricCounter
-		metric.ID = nameMetric
-		metric.Delta = &valueMetric
-		sendMetric(metric)
+		hd := valueMetric
+		metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricCounter, Delta: &hd})
 	}
+	sendAllMetric(metrics)
 }
 
 func collectMetrics() {

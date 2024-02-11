@@ -4,6 +4,7 @@ import (
 	"github.com/drrhaos/metrics/internal/database"
 	"github.com/drrhaos/metrics/internal/logger"
 	"github.com/drrhaos/metrics/internal/storage"
+	"go.uber.org/zap"
 )
 
 type RouterStorage struct {
@@ -18,19 +19,22 @@ func NewRouterStorage() *RouterStorage {
 		switchStorage.DB = *database.NewDatabase()
 		err := switchStorage.DB.Connect(cfg.DatabaseDsn)
 		if err != nil {
-			panic(err)
+			logger.Log.Panic("Не удалось подключиться к БД", zap.Error(err))
 		}
+
 		err = switchStorage.DB.Migrations()
 		if err != nil {
-			panic(err)
+			logger.Log.Panic("Не создать таблицы", zap.Error(err))
 		}
 		switchStorage.usageDB = true
+		logger.Log.Info("Соединение с базой успешно установлено")
 	}
 	return switchStorage
 }
 
 func (storage *RouterStorage) SaveMetrics(filePath string) bool {
 	if storage == nil {
+		logger.Log.Panic("Хранилище не может быть nil")
 		return false
 	}
 	return storage.RAM.SaveMetrics(filePath)
@@ -38,6 +42,7 @@ func (storage *RouterStorage) SaveMetrics(filePath string) bool {
 
 func (storage *RouterStorage) LoadMetrics(filePath string) bool {
 	if storage == nil {
+		logger.Log.Panic("Хранилище не может быть nil")
 		return false
 	}
 	return storage.RAM.LoadMetrics(filePath)
@@ -45,6 +50,7 @@ func (storage *RouterStorage) LoadMetrics(filePath string) bool {
 
 func (storage *RouterStorage) UpdateCounter(nameMetric string, valueMetric int64) bool {
 	if storage == nil {
+		logger.Log.Panic("Хранилище не может быть nil")
 		return false
 	}
 	if storage.usageDB {
@@ -56,6 +62,7 @@ func (storage *RouterStorage) UpdateCounter(nameMetric string, valueMetric int64
 
 func (storage *RouterStorage) UpdateGauge(nameMetric string, valueMetric float64) bool {
 	if storage == nil {
+		logger.Log.Panic("Хранилище не может быть nil")
 		return false
 	}
 	if storage.usageDB {
@@ -96,6 +103,7 @@ func (storage *RouterStorage) GetCounters() (map[string]int64, bool) {
 
 func (storage *RouterStorage) GetCounter(nameMetric string) (currentValue int64, exists bool) {
 	if storage == nil {
+		logger.Log.Panic("Хранилище не может быть nil")
 		return currentValue, false
 	}
 
@@ -110,6 +118,7 @@ func (storage *RouterStorage) GetCounter(nameMetric string) (currentValue int64,
 
 func (storage *RouterStorage) GetGauge(nameMetric string) (currentValue float64, exists bool) {
 	if storage == nil {
+		logger.Log.Panic("Хранилище не может быть nil")
 		return currentValue, false
 	}
 	currentValue, exists = storage.RAM.GetGauge(nameMetric)

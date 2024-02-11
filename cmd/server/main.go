@@ -22,6 +22,7 @@ const urlGetMetricsConst = "/"
 const urlGetPing = "/ping"
 const urlUpdateMetricConst = "/update/{typeMetric}/{nameMetric}/{valueMetric}"
 const urlUpdateMetricJSONConst = "/update/"
+const urlUpdatesMetricJSONConst = "/updates/"
 const urlGetMetricConst = "/value/{typeMetric}/{nameMetric}"
 const urlGetMetricJSONConst = "/value/"
 
@@ -74,6 +75,9 @@ func main() {
 	})
 	r.Post(urlUpdateMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
 		updateMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdatesMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		updatesMetricJSONHandler(w, r, stMetrics)
 	})
 	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
 		getMetricHandler(w, r, stMetrics)

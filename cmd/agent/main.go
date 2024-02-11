@@ -12,7 +12,7 @@ const typeMetricGauge = "gauge"
 const randomValueName = "RandomValue"
 const pollCountName = "PollCount"
 
-const urlUpdateJSONConst = "http://%s/update/"
+const urlUpdateMetricsJSONConst = "http://%s/updates/"
 
 var nameGauges = []string{
 	"Alloc",

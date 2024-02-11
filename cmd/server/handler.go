@@ -151,10 +151,52 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *Ro
 	res.WriteHeader(http.StatusOK)
 }
 
+func updatesMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *RouterStorage) {
+	if storage == nil {
+		panic("Storage nil")
+	}
+	var metrics []Metrics
+	var buf bytes.Buffer
+
+	_, err := buf.ReadFrom(req.Body)
+	if err != nil {
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	if err = json.Unmarshal(buf.Bytes(), &metrics); err != nil {
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	var ok bool
+	for _, met := range metrics {
+		switch met.MType {
+		case typeMetricCounter:
+			ok = storage.UpdateCounter(met.ID, *met.Delta)
+		case typeMetricGauge:
+			ok = storage.UpdateGauge(met.ID, *met.Value)
+		default:
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		if !ok {
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	}
+
+	if cfg.StoreInterval == 0 {
+		storage.SaveMetrics(cfg.FileStoragePath)
+	}
+	res.WriteHeader(http.StatusOK)
+}
+
 func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *RouterStorage) {
 	if storage == nil {
 		panic("Storage nil")
 	}
+
 	var metrics Metrics
 	var buf bytes.Buffer
 
