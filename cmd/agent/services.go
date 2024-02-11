@@ -109,13 +109,15 @@ func collectMetrics() {
 		Gauge:   make(map[string]float64),
 		Mut:     sync.Mutex{},
 	}
-
+	var mut sync.Mutex
 	go func() {
 		var PollCount int64
 		for {
 			PollCount++
 			time.Sleep(time.Duration(cfg.PollInterval) * time.Second)
+			mut.Lock()
 			updateMertics(metricsCPU, PollCount)
+			mut.Unlock()
 		}
 	}()
 
