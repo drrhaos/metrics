@@ -59,7 +59,7 @@ func (db *Database) Migrations() error {
 			`CREATE TABLE counters (
 				"id" SERIAL PRIMARY KEY,
 				"name" character(40) NOT NULL UNIQUE,
-				"value" integer NOT NULL
+				"value" bigint NOT NULL
 			)`)
 		if err != nil {
 			return err
