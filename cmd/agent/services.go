@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/avast/retry-go"
 	"github.com/drrhaos/metrics/internal/logger"
 	"github.com/drrhaos/metrics/internal/storage"
 	"go.uber.org/zap"
@@ -69,15 +70,36 @@ func sendAllMetric(metrics []Metrics) {
 		logger.Log.Warn("Не сжать данные", zap.Error(err))
 		return
 	}
-	r, _ := http.NewRequest(http.MethodPost, urlStr, buf)
-	r.Header.Set("Content-Type", "application/json")
-	r.Header.Set("Content-Encoding", "gzip")
-	resp, err := client.Do(r)
+	err = retry.Do(
+		func() error {
+			r, _ := http.NewRequest(http.MethodPost, urlStr, buf)
+			r.Header.Set("Content-Type", "application/json")
+			r.Header.Set("Content-Encoding", "gzip")
+			resp, err := client.Do(r)
+			if err != nil {
+				logger.Log.Warn("Не удалось отправить запрос", zap.Error(err))
+				return err
+			}
+			defer resp.Body.Close()
+			return nil
+		},
+		retry.Attempts(3),
+		retry.DelayType(func(n uint, err error, config *retry.Config) time.Duration {
+			switch n {
+			case 0:
+				return 1 * time.Second
+			case 1:
+				return 3 * time.Second
+			case 2:
+				return 5 * time.Second
+			default:
+				return 0
+			}
+		}),
+	)
 	if err != nil {
-		logger.Log.Warn("Не удалось отправить запрос", zap.Error(err))
-		return
+		logger.Log.Warn("Не удалось отправить данные", zap.Error(err))
 	}
-	defer resp.Body.Close()
 }
 
 func sendMetrics(metricsCPU *storage.MemStorage) {
@@ -100,6 +122,7 @@ func sendMetrics(metricsCPU *storage.MemStorage) {
 		hd := valueMetric
 		metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricCounter, Delta: &hd})
 	}
+
 	sendAllMetric(metrics)
 }
 

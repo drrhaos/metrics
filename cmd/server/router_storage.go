@@ -53,11 +53,13 @@ func (storage *RouterStorage) UpdateCounter(nameMetric string, valueMetric int64
 		logger.Log.Panic("Хранилище не может быть nil")
 		return false
 	}
+	okMem := storage.RAM.UpdateCounter(nameMetric, valueMetric)
+	var okDB bool
 	if storage.usageDB {
-		storage.DB.UpdateCounter(nameMetric, valueMetric)
+		okDB = storage.DB.UpdateCounter(nameMetric, valueMetric)
 	}
 
-	return storage.RAM.UpdateCounter(nameMetric, valueMetric)
+	return okMem || okDB
 }
 
 func (storage *RouterStorage) UpdateGauge(nameMetric string, valueMetric float64) bool {
@@ -65,11 +67,13 @@ func (storage *RouterStorage) UpdateGauge(nameMetric string, valueMetric float64
 		logger.Log.Panic("Хранилище не может быть nil")
 		return false
 	}
+	okMem := storage.RAM.UpdateGauge(nameMetric, valueMetric)
+	var okDB bool
 	if storage.usageDB {
-		storage.DB.UpdateGauge(nameMetric, valueMetric)
+		okDB = storage.DB.UpdateGauge(nameMetric, valueMetric)
 	}
 
-	return storage.RAM.UpdateGauge(nameMetric, valueMetric)
+	return okMem || okDB
 }
 
 func (storage *RouterStorage) GetGauges() (map[string]float64, bool) {

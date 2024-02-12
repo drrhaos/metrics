@@ -2,7 +2,9 @@ package database
 
 import (
 	"context"
+	"time"
 
+	"github.com/avast/retry-go"
 	"github.com/drrhaos/metrics/internal/logger"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -17,6 +19,21 @@ type Database struct {
 
 func NewDatabase() *Database {
 	return &Database{}
+}
+
+func customDelay() retry.DelayTypeFunc {
+	return func(n uint, err error, config *retry.Config) time.Duration {
+		switch n {
+		case 0:
+			return 1 * time.Second
+		case 1:
+			return 3 * time.Second
+		case 2:
+			return 5 * time.Second
+		default:
+			return 0
+		}
+	}
 }
 
 func (db *Database) Close() {
@@ -87,11 +104,22 @@ func (db *Database) Migrations() error {
 }
 
 func (db *Database) UpdateGauge(nameMetric string, valueMetric float64) bool {
-	_, err := db.Conn.Exec(context.Background(),
-		`INSERT INTO gauges (name, value)
+	err := retry.Do(
+		func() error {
+			_, err := db.Conn.Exec(context.Background(),
+				`INSERT INTO gauges (name, value)
 		VALUES ($1, $2)
 		ON CONFLICT (name) DO UPDATE
 		SET value = EXCLUDED.value`, nameMetric, valueMetric)
+			if err != nil {
+				logger.Log.Warn("Не удалось обновить значение", zap.Error(err))
+				return err
+			}
+			return nil
+		},
+		retry.Attempts(3),
+		retry.DelayType(customDelay()),
+	)
 	if err != nil {
 		logger.Log.Warn("Не удалось обновить значение", zap.Error(err))
 		return false
@@ -104,12 +132,22 @@ func (db *Database) UpdateCounter(nameMetric string, valueMetric int64) bool {
 	if exist {
 		valueMetric += currentValue
 	}
-
-	_, err := db.Conn.Exec(context.Background(),
-		`INSERT INTO counters (name, value)
+	err := retry.Do(
+		func() error {
+			_, err := db.Conn.Exec(context.Background(),
+				`INSERT INTO counters (name, value)
 		VALUES ($1, $2)
 		ON CONFLICT (name) DO UPDATE
 		SET value = EXCLUDED.value`, nameMetric, valueMetric)
+			if err != nil {
+				logger.Log.Warn("Не удалось обновить значение", zap.Error(err))
+				return err
+			}
+			return nil
+		},
+		retry.Attempts(3),
+		retry.DelayType(customDelay()),
+	)
 	if err != nil {
 		logger.Log.Warn("Не удалось обновить значение", zap.Error(err))
 		return false
@@ -118,10 +156,20 @@ func (db *Database) UpdateCounter(nameMetric string, valueMetric int64) bool {
 }
 
 func (db *Database) GetGauge(nameMetric string) (valueMetric float64, exists bool) {
-	err := db.Conn.QueryRow(context.Background(),
-		`SELECT value
+	err := retry.Do(
+		func() error {
+			err := db.Conn.QueryRow(context.Background(),
+				`SELECT value
 		FROM gauges
 		WHERE name = $1`, nameMetric).Scan(&valueMetric)
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+		retry.Attempts(3),
+		retry.DelayType(customDelay()),
+	)
 	if err != nil {
 		logger.Log.Warn("Не удалось получить значение", zap.Error(err))
 		return valueMetric, false
@@ -130,11 +178,21 @@ func (db *Database) GetGauge(nameMetric string) (valueMetric float64, exists boo
 }
 
 func (db *Database) GetCounter(nameMetric string) (valueMetric int64, exists bool) {
-	err := db.Conn.QueryRow(context.Background(),
-		`SELECT value
+	err := retry.Do(
+		func() error {
+			err := db.Conn.QueryRow(context.Background(),
+				`SELECT value
 		FROM counters
 		WHERE name = $1`, nameMetric).Scan(&valueMetric)
 
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+		retry.Attempts(3),
+		retry.DelayType(customDelay()),
+	)
 	if err != nil {
 		logger.Log.Warn("Не удалось получить значение", zap.Error(err))
 		return valueMetric, false
@@ -144,48 +202,69 @@ func (db *Database) GetCounter(nameMetric string) (valueMetric int64, exists boo
 
 func (db *Database) GetGauges() (map[string]float64, bool) {
 	valuesMetric := make(map[string]float64)
-	rows, err := db.Conn.Query(context.Background(),
-		`SELECT name, value
-		FROM gauges`)
+	err := retry.Do(
+		func() error {
+			rows, err := db.Conn.Query(context.Background(),
+				`SELECT name, value
+				FROM gauges`)
+			if err != nil {
+				return err
+			}
+			defer rows.Close()
+			for rows.Next() {
+				var nameMetric string
+				var valueMetric float64
+				err = rows.Scan(&nameMetric, &valueMetric)
+				if err != nil {
+					return err
+				}
+
+				valuesMetric[nameMetric] = valueMetric
+			}
+
+			return nil
+		},
+		retry.Attempts(3),
+		retry.DelayType(customDelay()),
+	)
 	if err != nil {
-		logger.Log.Warn("Не удалось получить значения", zap.Error(err))
+		logger.Log.Warn("Не удалось получить значение", zap.Error(err))
 		return valuesMetric, false
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var nameMetric string
-		var valueMetric float64
-		err = rows.Scan(&nameMetric, &valueMetric)
-		if err != nil {
-			return valuesMetric, false
-		}
-
-		valuesMetric[nameMetric] = valueMetric
-	}
 	return valuesMetric, true
 }
 
 func (db *Database) GetCounters() (map[string]int64, bool) {
 	valuesMetric := make(map[string]int64)
-	rows, err := db.Conn.Query(context.Background(),
-		`SELECT name, value
+	err := retry.Do(
+		func() error {
+			rows, err := db.Conn.Query(context.Background(),
+				`SELECT name, value
 		FROM counters`)
+			if err != nil {
+				return err
+			}
+			defer rows.Close()
+
+			for rows.Next() {
+				var nameMetric string
+				var valueMetric int64
+				err = rows.Scan(&nameMetric, &valueMetric)
+				if err != nil {
+					return err
+				}
+
+				valuesMetric[nameMetric] = valueMetric
+			}
+			return nil
+		},
+		retry.Attempts(3),
+		retry.DelayType(customDelay()),
+	)
 	if err != nil {
-		logger.Log.Warn("Не удалось получить значения", zap.Error(err))
+		logger.Log.Warn("Не удалось получить значение", zap.Error(err))
 		return valuesMetric, false
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var nameMetric string
-		var valueMetric int64
-		err = rows.Scan(&nameMetric, &valueMetric)
-		if err != nil {
-			return valuesMetric, false
-		}
-
-		valuesMetric[nameMetric] = valueMetric
 	}
 	return valuesMetric, true
 }
