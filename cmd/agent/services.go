@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -40,16 +41,16 @@ func getFloat64MemStats(m runtime.MemStats, name string) (float64, bool) {
 	return floatValue, true
 }
 
-func updateMertics(metricsCPU *ramstorage.RAMStorage, PollCount int64) {
+func updateMertics(ctx context.Context, metricsCPU *ramstorage.RAMStorage, PollCount int64) {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	metricsCPU.UpdateGauge(randomValueName, rand.Float64())
-	metricsCPU.UpdateCounter(pollCountName, PollCount)
+	metricsCPU.UpdateGauge(ctx, randomValueName, rand.Float64())
+	metricsCPU.UpdateCounter(ctx, pollCountName, PollCount)
 
 	for _, name := range nameGauges {
 		floatValue, ok := getFloat64MemStats(m, name)
 		if ok {
-			metricsCPU.UpdateGauge(name, floatValue)
+			metricsCPU.UpdateGauge(ctx, name, floatValue)
 		}
 	}
 }
@@ -102,8 +103,8 @@ func sendAllMetric(metrics []Metrics) {
 	}
 }
 
-func sendMetrics(metricsCPU *ramstorage.RAMStorage) {
-	currentGauges, ok := metricsCPU.GetGauges()
+func sendMetrics(ctx context.Context, metricsCPU *ramstorage.RAMStorage) {
+	currentGauges, ok := metricsCPU.GetGauges(ctx)
 	if !ok {
 		return
 	}
@@ -114,7 +115,7 @@ func sendMetrics(metricsCPU *ramstorage.RAMStorage) {
 		metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricGauge, Value: &hd})
 	}
 
-	currentCounters, ok := metricsCPU.GetCounters()
+	currentCounters, ok := metricsCPU.GetCounters(ctx)
 	if !ok {
 		return
 	}
@@ -132,6 +133,7 @@ func collectMetrics() {
 		Gauge:   make(map[string]float64),
 		Mut:     sync.Mutex{},
 	}
+	ctx := context.Background()
 	var mut sync.Mutex
 	go func() {
 		var PollCount int64
@@ -139,7 +141,7 @@ func collectMetrics() {
 			PollCount++
 			time.Sleep(time.Duration(cfg.PollInterval) * time.Second)
 			mut.Lock()
-			updateMertics(metricsCPU, PollCount)
+			updateMertics(ctx, metricsCPU, PollCount)
 			mut.Unlock()
 		}
 	}()
@@ -147,7 +149,7 @@ func collectMetrics() {
 	go func() {
 		for {
 			time.Sleep(time.Duration(cfg.ReportInterval) * time.Second)
-			sendMetrics(metricsCPU)
+			sendMetrics(ctx, metricsCPU)
 		}
 	}()
 	select {}

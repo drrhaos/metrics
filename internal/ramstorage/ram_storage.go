@@ -1,6 +1,7 @@
 package ramstorage
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"sync"
@@ -81,7 +82,7 @@ func (storage *RAMStorage) LoadMetrics(filePath string) bool {
 	return true
 }
 
-func (storage *RAMStorage) UpdateCounter(nameMetric string, valueMetric int64) bool {
+func (storage *RAMStorage) UpdateCounter(ctx context.Context, nameMetric string, valueMetric int64) bool {
 	if storage == nil {
 		return false
 	}
@@ -91,7 +92,7 @@ func (storage *RAMStorage) UpdateCounter(nameMetric string, valueMetric int64) b
 	return true
 }
 
-func (storage *RAMStorage) UpdateGauge(nameMetric string, valueMetric float64) bool {
+func (storage *RAMStorage) UpdateGauge(ctx context.Context, nameMetric string, valueMetric float64) bool {
 	if storage == nil {
 		return false
 	}
@@ -101,7 +102,7 @@ func (storage *RAMStorage) UpdateGauge(nameMetric string, valueMetric float64) b
 	return true
 }
 
-func (storage *RAMStorage) GetGauges() (map[string]float64, bool) {
+func (storage *RAMStorage) GetGauges(ctx context.Context) (map[string]float64, bool) {
 	if storage == nil {
 		logger.Log.Panic("Хранилище не может быть nil")
 		return nil, false
@@ -111,7 +112,7 @@ func (storage *RAMStorage) GetGauges() (map[string]float64, bool) {
 	return storage.Gauge, true
 }
 
-func (storage *RAMStorage) GetCounters() (map[string]int64, bool) {
+func (storage *RAMStorage) GetCounters(ctx context.Context) (map[string]int64, bool) {
 	if storage == nil {
 		logger.Log.Panic("Хранилище не может быть nil")
 		return nil, false
@@ -121,7 +122,7 @@ func (storage *RAMStorage) GetCounters() (map[string]int64, bool) {
 	return storage.Counter, true
 }
 
-func (storage *RAMStorage) GetCounter(nameMetric string) (currentValue int64, exists bool) {
+func (storage *RAMStorage) GetCounter(ctx context.Context, nameMetric string) (currentValue int64, exists bool) {
 	if storage == nil {
 		return currentValue, false
 	}
@@ -135,7 +136,7 @@ func (storage *RAMStorage) GetCounter(nameMetric string) (currentValue int64, ex
 	return currentValue, exists
 }
 
-func (storage *RAMStorage) GetGauge(nameMetric string) (currentValue float64, exists bool) {
+func (storage *RAMStorage) GetGauge(ctx context.Context, nameMetric string) (currentValue float64, exists bool) {
 	if storage == nil {
 		return currentValue, false
 	}
@@ -149,6 +150,6 @@ func (storage *RAMStorage) GetGauge(nameMetric string) (currentValue float64, ex
 	return currentValue, exists
 }
 
-func (storage *RAMStorage) Ping() bool {
+func (storage *RAMStorage) Ping(ctx context.Context) bool {
 	return false
 }

@@ -50,7 +50,7 @@ func main() {
 	stMetrics := &StorageContext{}
 
 	if cfg.DatabaseDsn != "" {
-		stMetrics.setStorage(database.NewDatabase(cfg.DatabaseDsn))
+		stMetrics.setStorage(database.NewDatabase(ctx, cfg.DatabaseDsn))
 	} else {
 		stMetrics.setStorage(ramstorage.NewStorage())
 	}

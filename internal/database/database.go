@@ -16,19 +16,19 @@ type Database struct {
 	Conn *pgxpool.Pool
 }
 
-func NewDatabase(uri string) *Database {
+func NewDatabase(ctx context.Context, uri string) *Database {
 	config, err := pgxpool.ParseConfig(uri)
 	if err != nil {
 		logger.Log.Panic("Ошибка при парсинге конфигурации:", zap.Error(err))
 		return nil
 	}
-	conn, err := pgxpool.NewWithConfig(context.Background(), config)
+	conn, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		logger.Log.Panic("Не удалось подключиться к базе данных")
 		return nil
 	}
 	db := &Database{Conn: conn}
-	err = db.Migrations()
+	err = db.Migrations(ctx)
 	if err != nil {
 		logger.Log.Panic("Не удалось подключиться к базе данных")
 		return nil
@@ -56,22 +56,22 @@ func (db *Database) Close() {
 	db.Conn.Close()
 }
 
-func (db *Database) Ping() bool {
-	if err := db.Conn.Ping(context.Background()); err != nil {
+func (db *Database) Ping(ctx context.Context) bool {
+	if err := db.Conn.Ping(ctx); err != nil {
 		return false
 	}
 	return true
 }
 
-func (db *Database) Migrations() error {
+func (db *Database) Migrations(ctx context.Context) error {
 	var exist bool
-	err := db.Conn.QueryRow(context.Background(),
+	err := db.Conn.QueryRow(ctx,
 		`SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'counters')`).Scan(&exist)
 	if err != nil {
 		return err
 	}
 	if !exist {
-		_, err := db.Conn.Exec(context.Background(),
+		_, err := db.Conn.Exec(ctx,
 			`CREATE TABLE counters (
 				"id" SERIAL PRIMARY KEY,
 				"name" character(40) NOT NULL UNIQUE,
@@ -82,13 +82,13 @@ func (db *Database) Migrations() error {
 		}
 	}
 
-	err = db.Conn.QueryRow(context.Background(),
+	err = db.Conn.QueryRow(ctx,
 		`SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'gauges')`).Scan(&exist)
 	if err != nil {
 		return err
 	}
 	if !exist {
-		_, err := db.Conn.Exec(context.Background(),
+		_, err := db.Conn.Exec(ctx,
 			`CREATE TABLE gauges (
 				"id" SERIAL PRIMARY KEY,
 				"name" character(40) NOT NULL UNIQUE,
@@ -102,10 +102,10 @@ func (db *Database) Migrations() error {
 	return nil
 }
 
-func (db *Database) UpdateGauge(nameMetric string, valueMetric float64) bool {
+func (db *Database) UpdateGauge(ctx context.Context, nameMetric string, valueMetric float64) bool {
 	err := retry.Do(
 		func() error {
-			_, err := db.Conn.Exec(context.Background(),
+			_, err := db.Conn.Exec(ctx,
 				`INSERT INTO gauges (name, value)
 		VALUES ($1, $2)
 		ON CONFLICT (name) DO UPDATE
@@ -126,14 +126,14 @@ func (db *Database) UpdateGauge(nameMetric string, valueMetric float64) bool {
 	return true
 }
 
-func (db *Database) UpdateCounter(nameMetric string, valueMetric int64) bool {
-	currentValue, exist := db.GetCounter(nameMetric)
+func (db *Database) UpdateCounter(ctx context.Context, nameMetric string, valueMetric int64) bool {
+	currentValue, exist := db.GetCounter(ctx, nameMetric)
 	if exist {
 		valueMetric += currentValue
 	}
 	err := retry.Do(
 		func() error {
-			_, err := db.Conn.Exec(context.Background(),
+			_, err := db.Conn.Exec(ctx,
 				`INSERT INTO counters (name, value)
 		VALUES ($1, $2)
 		ON CONFLICT (name) DO UPDATE
@@ -154,10 +154,10 @@ func (db *Database) UpdateCounter(nameMetric string, valueMetric int64) bool {
 	return true
 }
 
-func (db *Database) GetGauge(nameMetric string) (valueMetric float64, exists bool) {
+func (db *Database) GetGauge(ctx context.Context, nameMetric string) (valueMetric float64, exists bool) {
 	err := retry.Do(
 		func() error {
-			err := db.Conn.QueryRow(context.Background(),
+			err := db.Conn.QueryRow(ctx,
 				`SELECT value
 		FROM gauges
 		WHERE name = $1`, nameMetric).Scan(&valueMetric)
@@ -176,10 +176,10 @@ func (db *Database) GetGauge(nameMetric string) (valueMetric float64, exists boo
 	return valueMetric, true
 }
 
-func (db *Database) GetCounter(nameMetric string) (valueMetric int64, exists bool) {
+func (db *Database) GetCounter(ctx context.Context, nameMetric string) (valueMetric int64, exists bool) {
 	err := retry.Do(
 		func() error {
-			err := db.Conn.QueryRow(context.Background(),
+			err := db.Conn.QueryRow(ctx,
 				`SELECT value
 		FROM counters
 		WHERE name = $1`, nameMetric).Scan(&valueMetric)
@@ -199,11 +199,11 @@ func (db *Database) GetCounter(nameMetric string) (valueMetric int64, exists boo
 	return valueMetric, true
 }
 
-func (db *Database) GetGauges() (map[string]float64, bool) {
+func (db *Database) GetGauges(ctx context.Context) (map[string]float64, bool) {
 	valuesMetric := make(map[string]float64)
 	err := retry.Do(
 		func() error {
-			rows, err := db.Conn.Query(context.Background(),
+			rows, err := db.Conn.Query(ctx,
 				`SELECT name, value
 				FROM gauges`)
 			if err != nil {
@@ -234,11 +234,11 @@ func (db *Database) GetGauges() (map[string]float64, bool) {
 	return valuesMetric, true
 }
 
-func (db *Database) GetCounters() (map[string]int64, bool) {
+func (db *Database) GetCounters(ctx context.Context) (map[string]int64, bool) {
 	valuesMetric := make(map[string]int64)
 	err := retry.Do(
 		func() error {
-			rows, err := db.Conn.Query(context.Background(),
+			rows, err := db.Conn.Query(ctx,
 				`SELECT name, value
 		FROM counters`)
 			if err != nil {

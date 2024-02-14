@@ -118,9 +118,9 @@ func Test_getMetricHandler(t *testing.T) {
 	stMetrics := &StorageContext{}
 	stMetrics.setStorage(ramstorage.NewStorage())
 
-	stMetrics.UpdateCounter("testCounter", 10)
-	stMetrics.UpdateGauge("testGauge", 11.1)
-	stMetrics.UpdateGauge("testGauge2", 12.1)
+	stMetrics.UpdateCounter(ctx, "testCounter", 10)
+	stMetrics.UpdateGauge(ctx, "testGauge", 11.1)
+	stMetrics.UpdateGauge(ctx, "testGauge2", 12.1)
 
 	r := chi.NewRouter()
 
@@ -229,9 +229,9 @@ func Test_getNameMetricsHandler(t *testing.T) {
 	stMetrics := &StorageContext{}
 	stMetrics.setStorage(ramstorage.NewStorage())
 
-	stMetrics.UpdateCounter("testCounter", 10)
-	stMetrics.UpdateGauge("testGauge", 11.1)
-	stMetrics.UpdateGauge("testGauge2", 12.1)
+	stMetrics.UpdateCounter(ctx, "testCounter", 10)
+	stMetrics.UpdateGauge(ctx, "testGauge", 11.1)
+	stMetrics.UpdateGauge(ctx, "testGauge2", 12.1)
 
 	r := chi.NewRouter()
 
