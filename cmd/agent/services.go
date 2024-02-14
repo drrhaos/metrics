@@ -12,7 +12,7 @@ import (
 
 	"github.com/avast/retry-go"
 	"github.com/drrhaos/metrics/internal/logger"
-	"github.com/drrhaos/metrics/internal/storage"
+	"github.com/drrhaos/metrics/internal/ramstorage"
 	"go.uber.org/zap"
 )
 
@@ -40,7 +40,7 @@ func getFloat64MemStats(m runtime.MemStats, name string) (float64, bool) {
 	return floatValue, true
 }
 
-func updateMertics(metricsCPU *storage.MemStorage, PollCount int64) {
+func updateMertics(metricsCPU *ramstorage.RAMStorage, PollCount int64) {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	metricsCPU.UpdateGauge(randomValueName, rand.Float64())
@@ -102,7 +102,7 @@ func sendAllMetric(metrics []Metrics) {
 	}
 }
 
-func sendMetrics(metricsCPU *storage.MemStorage) {
+func sendMetrics(metricsCPU *ramstorage.RAMStorage) {
 	currentGauges, ok := metricsCPU.GetGauges()
 	if !ok {
 		return
@@ -127,7 +127,7 @@ func sendMetrics(metricsCPU *storage.MemStorage) {
 }
 
 func collectMetrics() {
-	metricsCPU := &storage.MemStorage{
+	metricsCPU := &ramstorage.RAMStorage{
 		Counter: make(map[string]int64),
 		Gauge:   make(map[string]float64),
 		Mut:     sync.Mutex{},

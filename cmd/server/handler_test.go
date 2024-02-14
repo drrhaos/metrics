@@ -1,28 +1,32 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/drrhaos/metrics/internal/ramstorage"
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_updateMetricHandler(t *testing.T) {
+	ctx := context.Background()
 
-	storage := NewRouterStorage()
+	stMetrics := &StorageContext{}
+	stMetrics.setStorage(ramstorage.NewStorage())
 
 	r := chi.NewRouter()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		getNameMetricsHandler(w, r, storage)
+		getNameMetricsHandler(ctx, w, r, stMetrics)
 	})
 	r.Post("/update/{typeMetric}/{nameMetric}/{valueMetric}", func(w http.ResponseWriter, r *http.Request) {
-		updateMetricHandler(w, r, storage)
+		updateMetricHandler(ctx, w, r, stMetrics)
 	})
 	r.Get("/value/{typeMetric}/{nameMetric}", func(w http.ResponseWriter, r *http.Request) {
-		getMetricHandler(w, r, storage)
+		getMetricHandler(ctx, w, r, stMetrics)
 	})
 
 	type want struct {
@@ -109,21 +113,25 @@ func Test_updateMetricHandler(t *testing.T) {
 }
 
 func Test_getMetricHandler(t *testing.T) {
-	storage := NewRouterStorage()
-	storage.UpdateCounter("testCounter", 10)
-	storage.UpdateGauge("testGauge", 11.1)
-	storage.UpdateGauge("testGauge2", 12.1)
+	ctx := context.Background()
+
+	stMetrics := &StorageContext{}
+	stMetrics.setStorage(ramstorage.NewStorage())
+
+	stMetrics.UpdateCounter("testCounter", 10)
+	stMetrics.UpdateGauge("testGauge", 11.1)
+	stMetrics.UpdateGauge("testGauge2", 12.1)
 
 	r := chi.NewRouter()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		getNameMetricsHandler(w, r, storage)
+		getNameMetricsHandler(ctx, w, r, stMetrics)
 	})
 	r.Post("/update/{typeMetric}/{nameMetric}/{valueMetric}", func(w http.ResponseWriter, r *http.Request) {
-		updateMetricHandler(w, r, storage)
+		updateMetricHandler(ctx, w, r, stMetrics)
 	})
 	r.Get("/value/{typeMetric}/{nameMetric}", func(w http.ResponseWriter, r *http.Request) {
-		getMetricHandler(w, r, storage)
+		getMetricHandler(ctx, w, r, stMetrics)
 	})
 
 	type want struct {
@@ -216,21 +224,25 @@ func Test_getMetricHandler(t *testing.T) {
 }
 
 func Test_getNameMetricsHandler(t *testing.T) {
-	storage := NewRouterStorage()
-	storage.UpdateCounter("testCounter", 10)
-	storage.UpdateGauge("testGauge", 11.1)
-	storage.UpdateGauge("testGauge2", 12.1)
+	ctx := context.Background()
+
+	stMetrics := &StorageContext{}
+	stMetrics.setStorage(ramstorage.NewStorage())
+
+	stMetrics.UpdateCounter("testCounter", 10)
+	stMetrics.UpdateGauge("testGauge", 11.1)
+	stMetrics.UpdateGauge("testGauge2", 12.1)
 
 	r := chi.NewRouter()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		getNameMetricsHandler(w, r, storage)
+		getNameMetricsHandler(ctx, w, r, stMetrics)
 	})
 	r.Post("/update/{typeMetric}/{nameMetric}/{valueMetric}", func(w http.ResponseWriter, r *http.Request) {
-		updateMetricHandler(w, r, storage)
+		updateMetricHandler(ctx, w, r, stMetrics)
 	})
 	r.Get("/value/{typeMetric}/{nameMetric}", func(w http.ResponseWriter, r *http.Request) {
-		getMetricHandler(w, r, storage)
+		getMetricHandler(ctx, w, r, stMetrics)
 	})
 
 	type want struct {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -29,7 +30,7 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
-func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *RouterStorage) {
+func updateMetricJSONHandler(ctx context.Context, res http.ResponseWriter, req *http.Request, storage *StorageContext) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -106,7 +107,7 @@ func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage
 	res.WriteHeader(http.StatusOK)
 }
 
-func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *RouterStorage) {
+func updateMetricHandler(ctx context.Context, res http.ResponseWriter, req *http.Request, storage *StorageContext) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -151,7 +152,7 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *Ro
 	res.WriteHeader(http.StatusOK)
 }
 
-func updatesMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *RouterStorage) {
+func updatesMetricJSONHandler(ctx context.Context, res http.ResponseWriter, req *http.Request, storage *StorageContext) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -192,7 +193,7 @@ func updatesMetricJSONHandler(res http.ResponseWriter, req *http.Request, storag
 	res.WriteHeader(http.StatusOK)
 }
 
-func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *RouterStorage) {
+func getMetricJSONHandler(ctx context.Context, res http.ResponseWriter, req *http.Request, storage *StorageContext) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -252,7 +253,7 @@ func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *R
 	res.WriteHeader(http.StatusOK)
 }
 
-func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *RouterStorage) {
+func getMetricHandler(ctx context.Context, res http.ResponseWriter, req *http.Request, storage *StorageContext) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -293,7 +294,7 @@ func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *Route
 	res.WriteHeader(http.StatusOK)
 }
 
-func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *RouterStorage) {
+func getNameMetricsHandler(ctx context.Context, res http.ResponseWriter, req *http.Request, storage *StorageContext) {
 	if storage == nil {
 		panic("Storage nil")
 	}
@@ -325,12 +326,8 @@ func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *
 	res.WriteHeader(http.StatusOK)
 }
 
-func getPing(res http.ResponseWriter, req *http.Request, storage *RouterStorage) {
-	if storage.DB.IsClosed() {
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	if !storage.DB.Ping() {
+func getPing(ctx context.Context, res http.ResponseWriter, req *http.Request, storage *StorageContext) {
+	if !storage.storage.Ping() {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}

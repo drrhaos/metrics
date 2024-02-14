@@ -1,4 +1,4 @@
-package storage
+package ramstorage
 
 import (
 	"encoding/json"
@@ -8,21 +8,21 @@ import (
 	"github.com/drrhaos/metrics/internal/logger"
 )
 
-type MemStorage struct {
+type RAMStorage struct {
 	Gauge   map[string]float64 `json:"gauge"`
 	Counter map[string]int64   `json:"counter"`
 	Mut     sync.Mutex
 }
 
-func NewStorage() *MemStorage {
-	return &MemStorage{
+func NewStorage() *RAMStorage {
+	return &RAMStorage{
 		Counter: make(map[string]int64),
 		Gauge:   make(map[string]float64),
 		Mut:     sync.Mutex{},
 	}
 }
 
-func (storage *MemStorage) SaveMetrics(filePath string) bool {
+func (storage *RAMStorage) SaveMetrics(filePath string) bool {
 	if storage == nil {
 		return false
 	}
@@ -47,7 +47,7 @@ func (storage *MemStorage) SaveMetrics(filePath string) bool {
 	return true
 }
 
-func (storage *MemStorage) LoadMetrics(filePath string) bool {
+func (storage *RAMStorage) LoadMetrics(filePath string) bool {
 	if storage == nil {
 		return false
 	}
@@ -81,7 +81,7 @@ func (storage *MemStorage) LoadMetrics(filePath string) bool {
 	return true
 }
 
-func (storage *MemStorage) UpdateCounter(nameMetric string, valueMetric int64) bool {
+func (storage *RAMStorage) UpdateCounter(nameMetric string, valueMetric int64) bool {
 	if storage == nil {
 		return false
 	}
@@ -91,7 +91,7 @@ func (storage *MemStorage) UpdateCounter(nameMetric string, valueMetric int64) b
 	return true
 }
 
-func (storage *MemStorage) UpdateGauge(nameMetric string, valueMetric float64) bool {
+func (storage *RAMStorage) UpdateGauge(nameMetric string, valueMetric float64) bool {
 	if storage == nil {
 		return false
 	}
@@ -101,7 +101,7 @@ func (storage *MemStorage) UpdateGauge(nameMetric string, valueMetric float64) b
 	return true
 }
 
-func (storage *MemStorage) GetGauges() (map[string]float64, bool) {
+func (storage *RAMStorage) GetGauges() (map[string]float64, bool) {
 	if storage == nil {
 		logger.Log.Panic("Хранилище не может быть nil")
 		return nil, false
@@ -111,7 +111,7 @@ func (storage *MemStorage) GetGauges() (map[string]float64, bool) {
 	return storage.Gauge, true
 }
 
-func (storage *MemStorage) GetCounters() (map[string]int64, bool) {
+func (storage *RAMStorage) GetCounters() (map[string]int64, bool) {
 	if storage == nil {
 		logger.Log.Panic("Хранилище не может быть nil")
 		return nil, false
@@ -121,7 +121,7 @@ func (storage *MemStorage) GetCounters() (map[string]int64, bool) {
 	return storage.Counter, true
 }
 
-func (storage *MemStorage) GetCounter(nameMetric string) (currentValue int64, exists bool) {
+func (storage *RAMStorage) GetCounter(nameMetric string) (currentValue int64, exists bool) {
 	if storage == nil {
 		return currentValue, false
 	}
@@ -135,7 +135,7 @@ func (storage *MemStorage) GetCounter(nameMetric string) (currentValue int64, ex
 	return currentValue, exists
 }
 
-func (storage *MemStorage) GetGauge(nameMetric string) (currentValue float64, exists bool) {
+func (storage *RAMStorage) GetGauge(nameMetric string) (currentValue float64, exists bool) {
 	if storage == nil {
 		return currentValue, false
 	}
@@ -147,4 +147,8 @@ func (storage *MemStorage) GetGauge(nameMetric string) (currentValue float64, ex
 	}
 
 	return currentValue, exists
+}
+
+func (storage *RAMStorage) Ping() bool {
+	return false
 }
