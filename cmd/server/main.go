@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"net/http"
 	"os"
@@ -34,8 +33,6 @@ const flagLogLevel = "info"
 var cfg Config
 
 func main() {
-	ctx := context.Background()
-
 	ok := cfg.readStartParams()
 
 	if !ok {
@@ -50,7 +47,7 @@ func main() {
 	stMetrics := &StorageContext{}
 
 	if cfg.DatabaseDsn != "" {
-		stMetrics.setStorage(database.NewDatabase(ctx, cfg.DatabaseDsn))
+		stMetrics.setStorage(database.NewDatabase(cfg.DatabaseDsn))
 	} else {
 		stMetrics.setStorage(ramstorage.NewStorage())
 	}
@@ -76,25 +73,25 @@ func main() {
 	logger.Log.Info("Сервер запущен", zap.String("адрес", cfg.Address))
 
 	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
-		getNameMetricsHandler(ctx, w, r, stMetrics)
+		getNameMetricsHandler(w, r, stMetrics)
 	})
 	r.Get(urlGetPing, func(w http.ResponseWriter, r *http.Request) {
-		getPing(ctx, w, r, stMetrics)
+		getPing(w, r, stMetrics)
 	})
 	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
-		updateMetricHandler(ctx, w, r, stMetrics)
+		updateMetricHandler(w, r, stMetrics)
 	})
 	r.Post(urlUpdateMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
-		updateMetricJSONHandler(ctx, w, r, stMetrics)
+		updateMetricJSONHandler(w, r, stMetrics)
 	})
 	r.Post(urlUpdatesMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
-		updatesMetricJSONHandler(ctx, w, r, stMetrics)
+		updatesMetricJSONHandler(w, r, stMetrics)
 	})
 	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
-		getMetricHandler(ctx, w, r, stMetrics)
+		getMetricHandler(w, r, stMetrics)
 	})
 	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
-		getMetricJSONHandler(ctx, w, r, stMetrics)
+		getMetricJSONHandler(w, r, stMetrics)
 	})
 
 	if err := http.ListenAndServe(cfg.Address, r); err != nil {

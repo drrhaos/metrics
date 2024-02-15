@@ -12,21 +12,19 @@ import (
 )
 
 func Test_updateMetricHandler(t *testing.T) {
-	ctx := context.Background()
-
 	stMetrics := &StorageContext{}
 	stMetrics.setStorage(ramstorage.NewStorage())
 
 	r := chi.NewRouter()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		getNameMetricsHandler(ctx, w, r, stMetrics)
+		getNameMetricsHandler(w, r, stMetrics)
 	})
 	r.Post("/update/{typeMetric}/{nameMetric}/{valueMetric}", func(w http.ResponseWriter, r *http.Request) {
-		updateMetricHandler(ctx, w, r, stMetrics)
+		updateMetricHandler(w, r, stMetrics)
 	})
 	r.Get("/value/{typeMetric}/{nameMetric}", func(w http.ResponseWriter, r *http.Request) {
-		getMetricHandler(ctx, w, r, stMetrics)
+		getMetricHandler(w, r, stMetrics)
 	})
 
 	type want struct {
@@ -125,13 +123,13 @@ func Test_getMetricHandler(t *testing.T) {
 	r := chi.NewRouter()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		getNameMetricsHandler(ctx, w, r, stMetrics)
+		getNameMetricsHandler(w, r, stMetrics)
 	})
 	r.Post("/update/{typeMetric}/{nameMetric}/{valueMetric}", func(w http.ResponseWriter, r *http.Request) {
-		updateMetricHandler(ctx, w, r, stMetrics)
+		updateMetricHandler(w, r, stMetrics)
 	})
 	r.Get("/value/{typeMetric}/{nameMetric}", func(w http.ResponseWriter, r *http.Request) {
-		getMetricHandler(ctx, w, r, stMetrics)
+		getMetricHandler(w, r, stMetrics)
 	})
 
 	type want struct {
@@ -236,13 +234,13 @@ func Test_getNameMetricsHandler(t *testing.T) {
 	r := chi.NewRouter()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		getNameMetricsHandler(ctx, w, r, stMetrics)
+		getNameMetricsHandler(w, r, stMetrics)
 	})
 	r.Post("/update/{typeMetric}/{nameMetric}/{valueMetric}", func(w http.ResponseWriter, r *http.Request) {
-		updateMetricHandler(ctx, w, r, stMetrics)
+		updateMetricHandler(w, r, stMetrics)
 	})
 	r.Get("/value/{typeMetric}/{nameMetric}", func(w http.ResponseWriter, r *http.Request) {
-		getMetricHandler(ctx, w, r, stMetrics)
+		getMetricHandler(w, r, stMetrics)
 	})
 
 	type want struct {

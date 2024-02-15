@@ -128,7 +128,10 @@ func collectMetrics() {
 		Gauge:   make(map[string]float64),
 		Mut:     sync.Mutex{},
 	}
-	ctx := context.Background()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	var mut sync.Mutex
 	go func() {
 		var PollCount int64

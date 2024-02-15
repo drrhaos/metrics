@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi"
 )
@@ -30,10 +31,14 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
-func updateMetricJSONHandler(ctx context.Context, res http.ResponseWriter, req *http.Request, storage *StorageContext) {
+func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *StorageContext) {
 	if storage == nil {
 		panic("Storage nil")
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	var metrics Metrics
 	var buf bytes.Buffer
 
@@ -107,10 +112,14 @@ func updateMetricJSONHandler(ctx context.Context, res http.ResponseWriter, req *
 	res.WriteHeader(http.StatusOK)
 }
 
-func updateMetricHandler(ctx context.Context, res http.ResponseWriter, req *http.Request, storage *StorageContext) {
+func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *StorageContext) {
 	if storage == nil {
 		panic("Storage nil")
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	typeMetric := chi.URLParam(req, typeMetricConst)
 	nameMetric := chi.URLParam(req, nameMetricConst)
 	valueMetric := chi.URLParam(req, valueMetricConst)
@@ -152,10 +161,14 @@ func updateMetricHandler(ctx context.Context, res http.ResponseWriter, req *http
 	res.WriteHeader(http.StatusOK)
 }
 
-func updatesMetricJSONHandler(ctx context.Context, res http.ResponseWriter, req *http.Request, storage *StorageContext) {
+func updatesMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *StorageContext) {
 	if storage == nil {
 		panic("Storage nil")
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	var metrics []Metrics
 	var buf bytes.Buffer
 
@@ -193,10 +206,13 @@ func updatesMetricJSONHandler(ctx context.Context, res http.ResponseWriter, req 
 	res.WriteHeader(http.StatusOK)
 }
 
-func getMetricJSONHandler(ctx context.Context, res http.ResponseWriter, req *http.Request, storage *StorageContext) {
+func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *StorageContext) {
 	if storage == nil {
 		panic("Storage nil")
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	var metrics Metrics
 	var buf bytes.Buffer
@@ -253,10 +269,14 @@ func getMetricJSONHandler(ctx context.Context, res http.ResponseWriter, req *htt
 	res.WriteHeader(http.StatusOK)
 }
 
-func getMetricHandler(ctx context.Context, res http.ResponseWriter, req *http.Request, storage *StorageContext) {
+func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *StorageContext) {
 	if storage == nil {
 		panic("Storage nil")
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	typeMetric := chi.URLParam(req, typeMetricConst)
 	nameMetric := chi.URLParam(req, nameMetricConst)
 
@@ -294,10 +314,14 @@ func getMetricHandler(ctx context.Context, res http.ResponseWriter, req *http.Re
 	res.WriteHeader(http.StatusOK)
 }
 
-func getNameMetricsHandler(ctx context.Context, res http.ResponseWriter, req *http.Request, storage *StorageContext) {
+func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *StorageContext) {
 	if storage == nil {
 		panic("Storage nil")
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	var list string
 	counters, ok := storage.GetCounters(ctx)
 	if !ok {
@@ -326,7 +350,11 @@ func getNameMetricsHandler(ctx context.Context, res http.ResponseWriter, req *ht
 	res.WriteHeader(http.StatusOK)
 }
 
-func getPing(ctx context.Context, res http.ResponseWriter, req *http.Request, storage *StorageContext) {
+func getPing(res http.ResponseWriter, req *http.Request, storage *StorageContext) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	if !storage.storage.Ping(ctx) {
 		res.WriteHeader(http.StatusInternalServerError)
 		return

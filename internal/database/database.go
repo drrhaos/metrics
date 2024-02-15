@@ -18,7 +18,10 @@ type Database struct {
 	Conn *pgxpool.Pool
 }
 
-func NewDatabase(ctx context.Context, uri string) *Database {
+func NewDatabase(uri string) *Database {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	config, err := pgxpool.ParseConfig(uri)
 	if err != nil {
 		logger.Log.Panic("Ошибка при парсинге конфигурации:", zap.Error(err))
