@@ -24,6 +24,12 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
+func customDelay() retry.DelayTypeFunc {
+	return func(n uint, err error, config *retry.Config) time.Duration {
+		return time.Duration(sleepStep[n])
+	}
+}
+
 func getFloat64MemStats(m runtime.MemStats, name string) (float64, bool) {
 	value := reflect.ValueOf(m).FieldByName(name)
 	var floatValue float64
@@ -85,18 +91,7 @@ func sendAllMetric(metrics []Metrics) {
 			return nil
 		},
 		retry.Attempts(3),
-		retry.DelayType(func(n uint, err error, config *retry.Config) time.Duration {
-			switch n {
-			case 0:
-				return 1 * time.Second
-			case 1:
-				return 3 * time.Second
-			case 2:
-				return 5 * time.Second
-			default:
-				return 0
-			}
-		}),
+		retry.DelayType(customDelay()),
 	)
 	if err != nil {
 		logger.Log.Warn("Не удалось отправить данные", zap.Error(err))

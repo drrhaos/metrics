@@ -14,6 +14,8 @@ const pollCountName = "PollCount"
 
 const urlUpdateMetricsJSONConst = "http://%s/updates/"
 
+var sleepStep = map[uint]int64{0: 1, 1: 3, 2: 5}
+
 var nameGauges = []string{
 	"Alloc",
 	"BuckHashSys",

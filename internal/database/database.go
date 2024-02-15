@@ -12,6 +12,8 @@ import (
 	"go.uber.org/zap"
 )
 
+var sleepStep = map[uint]int64{0: 1, 1: 3, 2: 5}
+
 type Database struct {
 	Conn *pgxpool.Pool
 }
@@ -270,15 +272,6 @@ func (db *Database) GetCounters(ctx context.Context) (map[string]int64, bool) {
 
 func customDelay() retry.DelayTypeFunc {
 	return func(n uint, err error, config *retry.Config) time.Duration {
-		switch n {
-		case 0:
-			return 1 * time.Second
-		case 1:
-			return 3 * time.Second
-		case 2:
-			return 5 * time.Second
-		default:
-			return 0
-		}
+		return time.Duration(sleepStep[n])
 	}
 }
