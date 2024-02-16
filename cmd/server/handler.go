@@ -36,7 +36,7 @@ func updateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage
 		panic("Storage nil")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
 	var metrics Metrics
@@ -117,7 +117,7 @@ func updateMetricHandler(res http.ResponseWriter, req *http.Request, storage *St
 		panic("Storage nil")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
 	typeMetric := chi.URLParam(req, typeMetricConst)
@@ -166,7 +166,7 @@ func updatesMetricJSONHandler(res http.ResponseWriter, req *http.Request, storag
 		panic("Storage nil")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
 	var metrics []Metrics
@@ -211,7 +211,7 @@ func getMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *S
 		panic("Storage nil")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
 	var metrics Metrics
@@ -274,7 +274,7 @@ func getMetricHandler(res http.ResponseWriter, req *http.Request, storage *Stora
 		panic("Storage nil")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
 	typeMetric := chi.URLParam(req, typeMetricConst)
@@ -319,7 +319,7 @@ func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *
 		panic("Storage nil")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
 	var list string
@@ -352,7 +352,7 @@ func getNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *
 
 func getPing(res http.ResponseWriter, req *http.Request, storage *StorageContext) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
 	if !storage.storage.Ping(ctx) {
