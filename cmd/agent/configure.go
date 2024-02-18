@@ -12,6 +12,7 @@ type Config struct {
 	Address        string `env:"ADDRESS"`
 	ReportInterval int64  `env:"REPORT_INTERVAL"`
 	PollInterval   int64  `env:"POLL_INTERVAL"`
+	Key            string `env:"KEY"`
 }
 
 func (cfg *Config) readStartParams() bool {
@@ -23,6 +24,7 @@ func (cfg *Config) readStartParams() bool {
 	address := flag.String("a", "127.0.0.1:8080", "Net address endpoint host:port")
 	reportInterval := flag.Int64("r", 10, "Report interval integer sec > 0")
 	pollInterval := flag.Int64("p", 2, "Pool interval integer sec > 0")
+	key := flag.String("k", "", "sha256 key for encryption of transmitted data")
 	flag.Parse()
 	if cfg.Address == "" {
 		cfg.Address = *address
@@ -34,6 +36,10 @@ func (cfg *Config) readStartParams() bool {
 
 	if cfg.PollInterval == 0 {
 		cfg.PollInterval = *pollInterval
+	}
+
+	if cfg.Key == "" {
+		cfg.Key = *key
 	}
 	_, errURL := url.ParseRequestURI("http://" + cfg.Address)
 

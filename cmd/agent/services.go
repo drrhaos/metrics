@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -82,6 +84,12 @@ func sendAllMetric(metrics []Metrics) {
 			r, _ := http.NewRequest(http.MethodPost, urlStr, buf)
 			r.Header.Set("Content-Type", "application/json")
 			r.Header.Set("Content-Encoding", "gzip")
+			if cfg.Key != "" {
+				h := hmac.New(sha256.New, []byte(cfg.Key))
+				h.Write(reqData)
+				hashReq := h.Sum(nil)
+				r.Header.Set("HashSHA256", string(hashReq))
+			}
 			resp, err := client.Do(r)
 			if err != nil {
 				logger.Log.Warn("Не удалось отправить запрос", zap.Error(err))
