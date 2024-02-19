@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/drrhaos/metrics/internal/logger"
 	"github.com/go-chi/chi"
 )
 
@@ -174,6 +175,7 @@ func updatesMetricJSONHandler(res http.ResponseWriter, req *http.Request, storag
 
 	_, err := buf.ReadFrom(req.Body)
 	if err != nil {
+		logger.Log.Warn("Не удалось прочитать тело запроса")
 		res.WriteHeader(http.StatusNotFound)
 		return
 	}

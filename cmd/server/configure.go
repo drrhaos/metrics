@@ -14,6 +14,7 @@ type Config struct {
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	Restore         bool   `env:"RESTORE" envDefault:"true"`
 	DatabaseDsn     string `env:"DATABASE_DSN"`
+	Key             string `env:"KEY"`
 }
 
 func (cfg *Config) readStartParams() bool {
@@ -27,6 +28,8 @@ func (cfg *Config) readStartParams() bool {
 	restore := flag.Bool("r", true, "Загружать последние сохранения показаний")
 	databaseDsn := flag.String("d", "",
 		"Сетевой адрес базя данных postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable")
+	key := flag.String("k", "", "sha256 key for encryption of transmitted data")
+
 	flag.Parse()
 	if cfg.Address == "" {
 		cfg.Address = *address
@@ -46,6 +49,10 @@ func (cfg *Config) readStartParams() bool {
 
 	if cfg.DatabaseDsn == "" {
 		cfg.DatabaseDsn = *databaseDsn
+	}
+
+	if cfg.Key == "" {
+		cfg.Key = *key
 	}
 
 	_, errURL := url.ParseRequestURI("http://" + cfg.Address)

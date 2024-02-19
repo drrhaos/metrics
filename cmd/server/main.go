@@ -9,6 +9,7 @@ import (
 	"github.com/drrhaos/metrics/internal/database"
 	"github.com/drrhaos/metrics/internal/logger"
 	"github.com/drrhaos/metrics/internal/ramstorage"
+	"github.com/drrhaos/metrics/internal/signature"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"go.uber.org/zap"
@@ -69,6 +70,8 @@ func main() {
 	r.Use(logger.RequestLogger)
 	r.Use(middleware.Compress(5, "application/json", "text/html"))
 	r.Use(gzipDecompressMiddleware)
+	r.Use(signature.CheckSignaturMiddleware(cfg.Key))
+	r.Use(signature.AddSignatureMiddleware(cfg.Key))
 
 	logger.Log.Info("Сервер запущен", zap.String("адрес", cfg.Address))
 

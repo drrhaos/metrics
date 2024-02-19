@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -88,7 +89,7 @@ func sendAllMetric(metrics []Metrics) {
 				h := hmac.New(sha256.New, []byte(cfg.Key))
 				h.Write(reqData)
 				hashReq := h.Sum(nil)
-				r.Header.Set("HashSHA256", string(hashReq))
+				r.Header.Set("HashSHA256", base64.URLEncoding.EncodeToString(hashReq))
 			}
 			resp, err := client.Do(r)
 			if err != nil {
