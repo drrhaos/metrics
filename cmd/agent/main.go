@@ -11,6 +11,9 @@ const typeMetricCounter = "counter"
 const typeMetricGauge = "gauge"
 const randomValueName = "RandomValue"
 const pollCountName = "PollCount"
+const gaugesTotalMem = "TotalMemory"
+const gaugesFreeMem = "FreeMemory"
+const gaugesCPUutil = "CPUutilization1"
 
 const urlUpdateMetricsJSONConst = "http://%s/updates/"
 

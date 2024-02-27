@@ -14,6 +14,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
+
 	"github.com/avast/retry-go"
 	"github.com/drrhaos/metrics/internal/logger"
 	"github.com/drrhaos/metrics/internal/ramstorage"
@@ -62,6 +65,16 @@ func updateMertics(ctx context.Context, metricsCPU *ramstorage.RAMStorage, PollC
 			metricsCPU.UpdateGauge(ctx, name, floatValue)
 		}
 	}
+}
+
+func updateMerticsGops(ctx context.Context, metricsCPU *ramstorage.RAMStorage) {
+	m, _ := mem.VirtualMemory()
+	totalMem := m.Total
+	metricsCPU.UpdateGauge(ctx, gaugesTotalMem, float64(totalMem))
+	freeMem := m.Free
+	metricsCPU.UpdateGauge(ctx, gaugesFreeMem, float64(freeMem))
+	countCPU, _ := cpu.Counts(false)
+	metricsCPU.UpdateGauge(ctx, gaugesCPUutil, float64(countCPU))
 }
 
 func sendAllMetric(metrics []Metrics) {
@@ -131,6 +144,12 @@ func sendMetrics(ctx context.Context, metricsCPU *ramstorage.RAMStorage) {
 	sendAllMetric(metrics)
 }
 
+func sendMetricsWorker(ctx context.Context, jobs <-chan *ramstorage.RAMStorage) {
+	for j := range jobs {
+		sendMetrics(ctx, j)
+	}
+}
+
 func collectMetrics() {
 	metricsCPU := &ramstorage.RAMStorage{
 		Counter: make(map[string]int64),
@@ -155,9 +174,21 @@ func collectMetrics() {
 
 	go func() {
 		for {
-			time.Sleep(time.Duration(cfg.ReportInterval) * time.Second)
-			sendMetrics(ctx, metricsCPU)
+			time.Sleep(time.Duration(cfg.PollInterval) * time.Second)
+			mut.Lock()
+			updateMerticsGops(ctx, metricsCPU)
+			mut.Unlock()
 		}
 	}()
-	select {}
+
+	jobs := make(chan *ramstorage.RAMStorage)
+
+	for w := 1; w <= int(cfg.RateLimit); w++ {
+		go sendMetricsWorker(ctx, jobs)
+	}
+
+	for {
+		time.Sleep(time.Duration(cfg.ReportInterval) * time.Second)
+		jobs <- metricsCPU
+	}
 }
