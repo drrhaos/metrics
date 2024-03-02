@@ -120,7 +120,7 @@ func sendAllMetric(metrics []Metrics) {
 	}
 }
 
-func sendMetrics(ctx context.Context, metricsCPU *ramstorage.RAMStorage) {
+func sendMetrics(ctx context.Context, metricsCPU *ramstorage.RAMStorage, nameSendMetric string) {
 	currentGauges, ok := metricsCPU.GetGauges(ctx)
 	if !ok {
 		return
@@ -129,7 +129,9 @@ func sendMetrics(ctx context.Context, metricsCPU *ramstorage.RAMStorage) {
 
 	for nameMetric, valueMetric := range currentGauges {
 		hd := valueMetric
-		metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricGauge, Value: &hd})
+		if nameMetric == nameSendMetric {
+			metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricGauge, Value: &hd})
+		}
 	}
 
 	currentCounters, ok := metricsCPU.GetCounters(ctx)
@@ -138,15 +140,18 @@ func sendMetrics(ctx context.Context, metricsCPU *ramstorage.RAMStorage) {
 	}
 	for nameMetric, valueMetric := range currentCounters {
 		hd := valueMetric
-		metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricCounter, Delta: &hd})
+		if nameMetric == nameSendMetric {
+			metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricCounter, Delta: &hd})
+		}
 	}
 
 	sendAllMetric(metrics)
 }
 
-func sendMetricsWorker(ctx context.Context, jobs <-chan *ramstorage.RAMStorage) {
+func sendMetricsWorker(i int, ctx context.Context, jobs <-chan string, metricsCPU *ramstorage.RAMStorage) {
 	for j := range jobs {
-		sendMetrics(ctx, j)
+		logger.Log.Info(fmt.Sprintf("Воркер %d метрика %s", i, j))
+		sendMetrics(ctx, metricsCPU, j)
 	}
 }
 
@@ -181,14 +186,27 @@ func collectMetrics() {
 		}
 	}()
 
-	jobs := make(chan *ramstorage.RAMStorage)
+	var wg sync.WaitGroup
+	jobs := make(chan string)
 
-	for w := 1; w <= int(cfg.RateLimit); w++ {
-		go sendMetricsWorker(ctx, jobs)
+	for i := 1; i <= int(cfg.RateLimit); i++ {
+		wg.Add(1)
+		go func(workerID int) {
+			defer wg.Done()
+			sendMetricsWorker(workerID, ctx, jobs, metricsCPU)
+		}(i)
 	}
 
 	for {
 		time.Sleep(time.Duration(cfg.ReportInterval) * time.Second)
-		jobs <- metricsCPU
+		currentGauges, _ := metricsCPU.GetGauges(ctx)
+		for gauge := range currentGauges {
+			jobs <- gauge
+		}
+
+		currentCounters, _ := metricsCPU.GetCounters(ctx)
+		for counter := range currentCounters {
+			jobs <- counter
+		}
 	}
 }
