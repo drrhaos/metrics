@@ -144,13 +144,15 @@ func sendMetrics(ctx context.Context, metricsCPU *ramstorage.RAMStorage) {
 	sendAllMetric(metrics)
 }
 
-func sendMetricsWorker(ctx context.Context, jobs <-chan *ramstorage.RAMStorage) {
-	for j := range jobs {
-		sendMetrics(ctx, j)
+func sendMetricsWorker(ctx context.Context, workerID int, jobs <-chan struct{}, metricsCPU *ramstorage.RAMStorage) {
+	for range jobs {
+		logger.Log.Info(fmt.Sprintf("Воркер %d новая задача", workerID))
+		sendMetrics(ctx, metricsCPU)
 	}
 }
 
 func collectMetrics() {
+	jobs := make(chan struct{}, cfg.RateLimit)
 	metricsCPU := &ramstorage.RAMStorage{
 		Counter: make(map[string]int64),
 		Gauge:   make(map[string]float64),
@@ -181,14 +183,14 @@ func collectMetrics() {
 		}
 	}()
 
-	jobs := make(chan *ramstorage.RAMStorage)
-
-	for w := 1; w <= int(cfg.RateLimit); w++ {
-		go sendMetricsWorker(ctx, jobs)
+	for w := 1; w <= cfg.RateLimit; w++ {
+		go func(workerID int) {
+			sendMetricsWorker(ctx, workerID, jobs, metricsCPU)
+		}(w)
 	}
 
 	for {
 		time.Sleep(time.Duration(cfg.ReportInterval) * time.Second)
-		jobs <- metricsCPU
+		jobs <- struct{}{}
 	}
 }
