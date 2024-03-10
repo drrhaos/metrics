@@ -78,7 +78,7 @@ func updateMerticsGops(ctx context.Context, metricsCPU *ramstorage.RAMStorage) {
 }
 
 func sendAllMetric(ctx context.Context, metrics []Metrics) {
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(time.Millisecond*80))
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(time.Second*30))
 	defer cancel()
 
 	client := &http.Client{}
@@ -99,6 +99,7 @@ func sendAllMetric(ctx context.Context, metrics []Metrics) {
 	err = retry.Do(
 		func() error {
 			r, _ := http.NewRequest(http.MethodPost, urlStr, buf)
+			r = r.WithContext(ctx)
 			r.Header.Set("Content-Type", "application/json")
 			r.Header.Set("Content-Encoding", "gzip")
 			if cfg.Key != "" {
@@ -123,44 +124,18 @@ func sendAllMetric(ctx context.Context, metrics []Metrics) {
 	}
 }
 
-func sendMetrics(ctx context.Context, metricsCPU *ramstorage.RAMStorage) {
-	currentGauges, ok := metricsCPU.GetGauges(ctx)
-	if !ok {
-		return
-	}
-	var metrics []Metrics
-
-	for nameMetric, valueMetric := range currentGauges {
-		hd := valueMetric
-		metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricGauge, Value: &hd})
-	}
-
-	currentCounters, ok := metricsCPU.GetCounters(ctx)
-	if !ok {
-		return
-	}
-	for nameMetric, valueMetric := range currentCounters {
-		hd := valueMetric
-		metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricCounter, Delta: &hd})
-	}
-
-	sendAllMetric(ctx, metrics)
-}
-
 func sendMetricsWorker(ctx context.Context, workerID int, jobs <-chan []Metrics) {
 	for job := range jobs {
-		logger.Log.Info(fmt.Sprintf("Воркер %d новая задача", workerID))
-		fmt.Println(job)
+		logger.Log.Info(fmt.Sprintf("Воркер %d количество метрик %d", workerID, len(job)))
 		sendAllMetric(ctx, job)
 	}
 }
 
-func prepareBatch(ctx context.Context, metricsCPU *ramstorage.RAMStorage) [][]Metrics {
+func prepareBatch(ctx context.Context, metricsCPU *ramstorage.RAMStorage) (metricsBatches [][]Metrics) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	var metrics []Metrics
-	metricsBatches := make([][]Metrics, cfg.RateLimit)
 
 	currentGauges, ok := metricsCPU.GetGauges(ctx)
 	if !ok {
@@ -181,15 +156,24 @@ func prepareBatch(ctx context.Context, metricsCPU *ramstorage.RAMStorage) [][]Me
 		metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricCounter, Delta: &hd})
 	}
 
-	partLen := len(metrics) / cfg.RateLimit
-	for i := 0; i < cfg.RateLimit; i++ {
-		start := i * partLen
-		end := start + partLen
-		if i == partLen-2 {
-			end = len(metrics)
-		}
-		metricsBatches[i] = metrics[start:end]
+	lenMetrics := len(metrics)
+	var countBatch int
+	if cfg.RateLimit > lenMetrics {
+		countBatch = lenMetrics
+	} else if cfg.RateLimit <= lenMetrics {
+		countBatch = cfg.RateLimit
 	}
+	metricsBatches = make([][]Metrics, countBatch)
+
+	i := 0
+	for j := 0; j < lenMetrics; j++ {
+		if i >= cfg.RateLimit {
+			i = 0
+		}
+		metricsBatches[i] = append(metricsBatches[i], metrics[j])
+		i++
+	}
+
 	return metricsBatches
 }
 
