@@ -77,7 +77,10 @@ func updateMerticsGops(ctx context.Context, metricsCPU *ramstorage.RAMStorage) {
 	metricsCPU.UpdateGauge(ctx, gaugesCPUutil, float64(countCPU))
 }
 
-func sendAllMetric(metrics []Metrics) {
+func sendAllMetric(ctx context.Context, metrics []Metrics) {
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(time.Millisecond*80))
+	defer cancel()
+
 	client := &http.Client{}
 
 	urlStr := fmt.Sprintf(urlUpdateMetricsJSONConst, cfg.Address)
@@ -141,26 +144,64 @@ func sendMetrics(ctx context.Context, metricsCPU *ramstorage.RAMStorage) {
 		metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricCounter, Delta: &hd})
 	}
 
-	sendAllMetric(metrics)
+	sendAllMetric(ctx, metrics)
 }
 
-func sendMetricsWorker(ctx context.Context, workerID int, jobs <-chan struct{}, metricsCPU *ramstorage.RAMStorage) {
-	for range jobs {
+func sendMetricsWorker(ctx context.Context, workerID int, jobs <-chan []Metrics) {
+	for job := range jobs {
 		logger.Log.Info(fmt.Sprintf("Воркер %d новая задача", workerID))
-		sendMetrics(ctx, metricsCPU)
+		fmt.Println(job)
+		sendAllMetric(ctx, job)
 	}
 }
 
+func prepareBatch(ctx context.Context, metricsCPU *ramstorage.RAMStorage) [][]Metrics {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	var metrics []Metrics
+	metricsBatches := make([][]Metrics, cfg.RateLimit)
+
+	currentGauges, ok := metricsCPU.GetGauges(ctx)
+	if !ok {
+		return metricsBatches
+	}
+
+	for nameMetric, valueMetric := range currentGauges {
+		hd := valueMetric
+		metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricGauge, Value: &hd})
+	}
+
+	currentCounters, ok := metricsCPU.GetCounters(ctx)
+	if !ok {
+		return metricsBatches
+	}
+	for nameMetric, valueMetric := range currentCounters {
+		hd := valueMetric
+		metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricCounter, Delta: &hd})
+	}
+
+	partLen := len(metrics) / cfg.RateLimit
+	for i := 0; i < cfg.RateLimit; i++ {
+		start := i * partLen
+		end := start + partLen
+		if i == partLen-2 {
+			end = len(metrics)
+		}
+		metricsBatches[i] = metrics[start:end]
+	}
+	return metricsBatches
+}
+
 func collectMetrics() {
-	jobs := make(chan struct{}, cfg.RateLimit)
+	jobs := make(chan []Metrics, cfg.RateLimit)
 	metricsCPU := &ramstorage.RAMStorage{
 		Counter: make(map[string]int64),
 		Gauge:   make(map[string]float64),
 		Mut:     sync.Mutex{},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	var mut sync.Mutex
 	go func() {
@@ -185,12 +226,14 @@ func collectMetrics() {
 
 	for w := 1; w <= cfg.RateLimit; w++ {
 		go func(workerID int) {
-			sendMetricsWorker(ctx, workerID, jobs, metricsCPU)
+			sendMetricsWorker(ctx, workerID, jobs)
 		}(w)
 	}
 
 	for {
 		time.Sleep(time.Duration(cfg.ReportInterval) * time.Second)
-		jobs <- struct{}{}
+		for _, metrics := range prepareBatch(ctx, metricsCPU) {
+			jobs <- metrics
+		}
 	}
 }
