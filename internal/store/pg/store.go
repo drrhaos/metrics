@@ -1,11 +1,12 @@
-package database
+package pg
 
 import (
 	"context"
 	"time"
 
+	"metrics/internal/logger"
+
 	"github.com/avast/retry-go"
-	"github.com/drrhaos/metrics/internal/logger"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"

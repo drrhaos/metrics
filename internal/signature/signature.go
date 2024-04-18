@@ -8,7 +8,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/drrhaos/metrics/internal/logger"
+	"metrics/internal/logger"
 )
 
 func AddSignatureMiddleware(key string) func(http.Handler) http.Handler {

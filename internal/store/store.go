@@ -1,4 +1,4 @@
-package main
+package store
 
 import "context"
 
@@ -18,7 +18,7 @@ type StorageContext struct {
 	storage StorageInterface
 }
 
-func (sc *StorageContext) setStorage(storage StorageInterface) {
+func (sc *StorageContext) SetStorage(storage StorageInterface) {
 	sc.storage = storage
 }
 

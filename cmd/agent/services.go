@@ -17,9 +17,10 @@ import (
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
 
+	"metrics/internal/logger"
+	"metrics/internal/store/ramstorage"
+
 	"github.com/avast/retry-go"
-	"github.com/drrhaos/metrics/internal/logger"
-	"github.com/drrhaos/metrics/internal/ramstorage"
 	"go.uber.org/zap"
 )
 

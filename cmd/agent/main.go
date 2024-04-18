@@ -4,7 +4,7 @@ import (
 	"flag"
 	"os"
 
-	"github.com/drrhaos/metrics/internal/logger"
+	"metrics/internal/logger"
 )
 
 const typeMetricCounter = "counter"

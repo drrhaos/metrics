@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/drrhaos/metrics/internal/logger"
+	"metrics/internal/logger"
 )
 
 type RAMStorage struct {

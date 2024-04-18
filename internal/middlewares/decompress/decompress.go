@@ -1,4 +1,4 @@
-package main
+package decompress
 
 import (
 	"compress/gzip"
@@ -35,7 +35,7 @@ func (c *compressReader) Close() error {
 	return c.zr.Close()
 }
 
-func gzipDecompressMiddleware(h http.Handler) http.Handler {
+func GzipDecompressMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		contentEncoding := req.Header.Get("Content-Encoding")
 		sendsGzip := strings.Contains(contentEncoding, "gzip")

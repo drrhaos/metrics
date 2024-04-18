@@ -4,8 +4,9 @@ import (
 	"flag"
 	"net/url"
 
+	"metrics/internal/logger"
+
 	"github.com/caarlos0/env/v6"
-	"github.com/drrhaos/metrics/internal/logger"
 )
 
 type Config struct {

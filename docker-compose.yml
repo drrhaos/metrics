@@ -17,3 +17,13 @@ services:
     restart: always
     ports:
       - 9000:8080
+
+  pgadmin:
+    image: dpage/pgadmin4
+    hostname: pgadmin4
+    restart: always
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=postgres@eample.com
+      - PGADMIN_DEFAULT_PASSWORD=example
+    ports:
+      - 80:80

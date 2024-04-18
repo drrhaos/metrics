@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"compress/gzip"
 
-	"github.com/drrhaos/metrics/internal/logger"
+	"metrics/internal/logger"
+
 	"go.uber.org/zap"
 )
 

@@ -1,11 +1,12 @@
-package main
+package configure
 
 import (
 	"flag"
 	"net/url"
 
+	"metrics/internal/logger"
+
 	"github.com/caarlos0/env/v10"
-	"github.com/drrhaos/metrics/internal/logger"
 )
 
 type Config struct {
@@ -17,7 +18,7 @@ type Config struct {
 	Key             string `env:"KEY"`
 }
 
-func (cfg *Config) readStartParams() bool {
+func (cfg *Config) ReadStartParams() bool {
 	err := env.Parse(cfg)
 	if err != nil {
 		logger.Log.Info("Не удалось найти переменные окружения ")

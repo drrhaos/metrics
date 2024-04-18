@@ -6,20 +6,19 @@ import (
 	"os"
 	"time"
 
-	"github.com/drrhaos/metrics/internal/database"
-	"github.com/drrhaos/metrics/internal/logger"
-	"github.com/drrhaos/metrics/internal/ramstorage"
-	"github.com/drrhaos/metrics/internal/signature"
+	"metrics/internal/handlers"
+	"metrics/internal/logger"
+	"metrics/internal/middlewares/decompress"
+	"metrics/internal/server/configure"
+	"metrics/internal/signature"
+	"metrics/internal/store"
+	"metrics/internal/store/pg"
+	"metrics/internal/store/ramstorage"
+
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"go.uber.org/zap"
 )
-
-const typeMetricCounter = "counter"
-const typeMetricGauge = "gauge"
-const typeMetricConst = "typeMetric"
-const nameMetricConst = "nameMetric"
-const valueMetricConst = "valueMetric"
 
 const urlGetMetricsConst = "/"
 const urlGetPing = "/ping"
@@ -31,26 +30,27 @@ const urlGetMetricJSONConst = "/value/"
 
 const flagLogLevel = "info"
 
-var cfg Config
+var cfg configure.Config
 
 func main() {
-	ok := cfg.readStartParams()
+	ok := cfg.ReadStartParams()
 
 	if !ok {
 		flag.PrintDefaults()
 		os.Exit(0)
 	}
 
-	if err := logger.Initialize(flagLogLevel); err != nil {
+	err := logger.Initialize(flagLogLevel)
+	if err != nil {
 		panic(err)
 	}
 
-	stMetrics := &StorageContext{}
+	stMetrics := &store.StorageContext{}
 
 	if cfg.DatabaseDsn != "" {
-		stMetrics.setStorage(database.NewDatabase(cfg.DatabaseDsn))
+		stMetrics.SetStorage(pg.NewDatabase(cfg.DatabaseDsn))
 	} else {
-		stMetrics.setStorage(ramstorage.NewStorage())
+		stMetrics.SetStorage(ramstorage.NewStorage())
 	}
 
 	if cfg.Restore {
@@ -69,32 +69,34 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(logger.RequestLogger)
 	r.Use(middleware.Compress(5, "application/json", "text/html"))
-	r.Use(gzipDecompressMiddleware)
+	r.Use(decompress.GzipDecompressMiddleware)
 	r.Use(signature.CheckSignaturMiddleware(cfg.Key))
 	r.Use(signature.AddSignatureMiddleware(cfg.Key))
 
 	logger.Log.Info("Сервер запущен", zap.String("адрес", cfg.Address))
 
+	metricHandler := handlers.NewMetricHandler(cfg)
+
 	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
-		getNameMetricsHandler(w, r, stMetrics)
+		metricHandler.GetNameMetricsHandler(w, r, stMetrics)
 	})
 	r.Get(urlGetPing, func(w http.ResponseWriter, r *http.Request) {
-		getPing(w, r, stMetrics)
+		metricHandler.GetPing(w, r, stMetrics)
 	})
 	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
-		updateMetricHandler(w, r, stMetrics)
+		metricHandler.UpdateMetricHandler(w, r, stMetrics)
 	})
 	r.Post(urlUpdateMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
-		updateMetricJSONHandler(w, r, stMetrics)
+		metricHandler.UpdateMetricJSONHandler(w, r, stMetrics)
 	})
 	r.Post(urlUpdatesMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
-		updatesMetricJSONHandler(w, r, stMetrics)
+		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
 	})
 	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
-		getMetricHandler(w, r, stMetrics)
+		metricHandler.GetMetricHandler(w, r, stMetrics)
 	})
 	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
-		getMetricJSONHandler(w, r, stMetrics)
+		metricHandler.GetMetricJSONHandler(w, r, stMetrics)
 	})
 
 	if err := http.ListenAndServe(cfg.Address, r); err != nil {
