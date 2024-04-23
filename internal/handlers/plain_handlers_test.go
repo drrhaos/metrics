@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"metrics/internal/server/configure"
 	"metrics/internal/store"
 	"metrics/internal/store/ramstorage"
 
@@ -13,20 +14,45 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_updateMetricHandler(t *testing.T) {
+const urlGetMetricsConst = "/"
+const urlGetPing = "/ping"
+const urlUpdateMetricConst = "/update/{typeMetric}/{nameMetric}/{valueMetric}"
+const urlUpdateMetricJSONConst = "/update/"
+const urlUpdatesMetricJSONConst = "/updates/"
+const urlGetMetricConst = "/value/{typeMetric}/{nameMetric}"
+const urlGetMetricJSONConst = "/value/"
+
+func Test_UpdateMetricHandler(t *testing.T) {
 	stMetrics := &store.StorageContext{}
 	stMetrics.SetStorage(ramstorage.NewStorage())
 
+	var cfg configure.Config
+	cfg.ReadStartParams()
+
+	metricHandler := NewMetricHandler(cfg)
+
 	r := chi.NewRouter()
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		GetNameMetricsHandler(w, r, stMetrics)
+	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetNameMetricsHandler(w, r, stMetrics)
 	})
-	r.Post("/update/{typeMetric}/{nameMetric}/{valueMetric}", func(w http.ResponseWriter, r *http.Request) {
-		UpdateMetricHandler(w, r, stMetrics)
+	r.Get(urlGetPing, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetPing(w, r, stMetrics)
 	})
-	r.Get("/value/{typeMetric}/{nameMetric}", func(w http.ResponseWriter, r *http.Request) {
-		GetMetricHandler(w, r, stMetrics)
+	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdatesMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricJSONHandler(w, r, stMetrics)
 	})
 
 	type want struct {
@@ -112,7 +138,7 @@ func Test_updateMetricHandler(t *testing.T) {
 	}
 }
 
-func Test_getMetricHandler(t *testing.T) {
+func Test_GetMetricHandler(t *testing.T) {
 	ctx := context.Background()
 
 	stMetrics := &store.StorageContext{}
@@ -122,16 +148,21 @@ func Test_getMetricHandler(t *testing.T) {
 	stMetrics.UpdateGauge(ctx, "testGauge", 11.1)
 	stMetrics.UpdateGauge(ctx, "testGauge2", 12.1)
 
+	var cfg configure.Config
+	cfg.ReadStartParams()
+
+	metricHandler := NewMetricHandler(cfg)
+
 	r := chi.NewRouter()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		getNameMetricsHandler(w, r, stMetrics)
+		metricHandler.GetNameMetricsHandler(w, r, stMetrics)
 	})
 	r.Post("/update/{typeMetric}/{nameMetric}/{valueMetric}", func(w http.ResponseWriter, r *http.Request) {
-		updateMetricHandler(w, r, stMetrics)
+		metricHandler.UpdateMetricHandler(w, r, stMetrics)
 	})
 	r.Get("/value/{typeMetric}/{nameMetric}", func(w http.ResponseWriter, r *http.Request) {
-		getMetricHandler(w, r, stMetrics)
+		metricHandler.GetMetricHandler(w, r, stMetrics)
 	})
 
 	type want struct {
@@ -223,7 +254,7 @@ func Test_getMetricHandler(t *testing.T) {
 	}
 }
 
-func Test_getNameMetricsHandler(t *testing.T) {
+func Test_GetNameMetricsHandler(t *testing.T) {
 	ctx := context.Background()
 
 	stMetrics := &store.StorageContext{}
@@ -233,16 +264,21 @@ func Test_getNameMetricsHandler(t *testing.T) {
 	stMetrics.UpdateGauge(ctx, "testGauge", 11.1)
 	stMetrics.UpdateGauge(ctx, "testGauge2", 12.1)
 
+	var cfg configure.Config
+	cfg.ReadStartParams()
+
+	metricHandler := NewMetricHandler(cfg)
+
 	r := chi.NewRouter()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		getNameMetricsHandler(w, r, stMetrics)
+		metricHandler.GetNameMetricsHandler(w, r, stMetrics)
 	})
 	r.Post("/update/{typeMetric}/{nameMetric}/{valueMetric}", func(w http.ResponseWriter, r *http.Request) {
-		updateMetricHandler(w, r, stMetrics)
+		metricHandler.UpdateMetricHandler(w, r, stMetrics)
 	})
 	r.Get("/value/{typeMetric}/{nameMetric}", func(w http.ResponseWriter, r *http.Request) {
-		getMetricHandler(w, r, stMetrics)
+		metricHandler.GetMetricHandler(w, r, stMetrics)
 	})
 
 	type want struct {

@@ -1,6 +1,8 @@
 package handlers
 
-import "metrics/internal/server/configure"
+import (
+	"metrics/internal/server/configure"
+)
 
 type MetricsHandler struct {
 	cfg configure.Config

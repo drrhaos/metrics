@@ -15,6 +15,8 @@ import (
 	"metrics/internal/store/pg"
 	"metrics/internal/store/ramstorage"
 
+	_ "net/http/pprof"
+
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"go.uber.org/zap"
@@ -72,6 +74,7 @@ func main() {
 	r.Use(decompress.GzipDecompressMiddleware)
 	r.Use(signature.CheckSignaturMiddleware(cfg.Key))
 	r.Use(signature.AddSignatureMiddleware(cfg.Key))
+	r.Mount("/debug", middleware.Profiler())
 
 	logger.Log.Info("Сервер запущен", zap.String("адрес", cfg.Address))
 
