@@ -55,28 +55,12 @@ func Benchmark_TestMetricsHandler_UpdateMetricJSONHandler(b *testing.B) {
 		MType: "counter",
 		Delta: &delt}
 
+	bodyMetr, _ := json.Marshal(met)
+	req := httptest.NewRequest(http.MethodPost, urlUpdateMetricJSONConst, bytes.NewReader(bodyMetr))
+	w := httptest.NewRecorder()
+
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bodyMetr, _ := json.Marshal(met)
-
-		req := httptest.NewRequest(http.MethodPost, urlUpdateMetricJSONConst, bytes.NewReader(bodyMetr))
-		w := httptest.NewRecorder()
-
-		r.ServeHTTP(w, req)
-
-	}
-
-	val := float64(1111.111)
-	met = Metrics{
-		ID:    "PoolCounter",
-		MType: "counter",
-		Value: &val}
-
-	for i := 0; i < b.N; i++ {
-		bodyMetr, _ := json.Marshal(met)
-
-		req := httptest.NewRequest(http.MethodPost, urlUpdateMetricJSONConst, bytes.NewReader(bodyMetr))
-		w := httptest.NewRecorder()
-
 		r.ServeHTTP(w, req)
 
 	}
@@ -127,12 +111,12 @@ func Benchmark_TestMetricsHandler_UpdatesMetricJSONHandler(b *testing.B) {
 		MType: "gauge",
 		Value: &valGauge})
 
+	bodyMetr, _ := json.Marshal(metrics)
+	req := httptest.NewRequest(http.MethodPost, urlUpdatesMetricJSONConst, bytes.NewReader(bodyMetr))
+	w := httptest.NewRecorder()
+
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bodyMetr, _ := json.Marshal(metrics)
-
-		req := httptest.NewRequest(http.MethodPost, urlUpdatesMetricJSONConst, bytes.NewReader(bodyMetr))
-		w := httptest.NewRecorder()
-
 		r.ServeHTTP(w, req)
 
 	}
@@ -179,12 +163,12 @@ func Benchmark_TestMetricsHandler_GetMetricJSONHandler(b *testing.B) {
 	dataMetric := Metrics{
 		ID:    "PoolCounter",
 		MType: "counter"}
+	bodyMetr, _ := json.Marshal(dataMetric)
+	req := httptest.NewRequest(http.MethodPost, urlGetMetricJSONConst, bytes.NewReader(bodyMetr))
+	w := httptest.NewRecorder()
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bodyMetr, _ := json.Marshal(dataMetric)
-		req := httptest.NewRequest(http.MethodPost, urlGetMetricJSONConst, bytes.NewReader(bodyMetr))
-		w := httptest.NewRecorder()
-
 		r.ServeHTTP(w, req)
 
 	}

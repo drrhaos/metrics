@@ -53,7 +53,7 @@ func Benchmark_TestMetricsHandler_UpdateMetricHandler(b *testing.B) {
 	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
 		metricHandler.GetMetricJSONHandler(w, r, stMetrics)
 	})
-
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		req := httptest.NewRequest(http.MethodPost, "/update/gauge/NumGC/11", nil)
 		w := httptest.NewRecorder()
@@ -90,7 +90,7 @@ func Benchmark_TestMetricsHandler_GetMetricHandler(b *testing.B) {
 	r.Get("/value/{typeMetric}/{nameMetric}", func(w http.ResponseWriter, r *http.Request) {
 		metricHandler.GetMetricHandler(w, r, stMetrics)
 	})
-
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		req := httptest.NewRequest(http.MethodGet, "/value/gauge/testGauge", nil)
 		w := httptest.NewRecorder()
@@ -126,11 +126,11 @@ func Benchmark_TestMetricsHandler_GetNameMetricsHandler(b *testing.B) {
 	r.Get("/value/{typeMetric}/{nameMetric}", func(w http.ResponseWriter, r *http.Request) {
 		metricHandler.GetMetricHandler(w, r, stMetrics)
 	})
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	w := httptest.NewRecorder()
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
-		w := httptest.NewRecorder()
-
 		r.ServeHTTP(w, req)
 
 	}
