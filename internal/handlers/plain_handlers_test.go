@@ -127,35 +127,6 @@ func Benchmark_TestMetricsHandler_GetNameMetricsHandler(b *testing.B) {
 		metricHandler.GetMetricHandler(w, r, stMetrics)
 	})
 
-	type want struct {
-		code   int
-		lenRes int
-	}
-	tests := []struct {
-		name       string
-		url        string
-		typeReqest string
-		want       want
-	}{
-		{
-			name:       "positive test get metrics #1",
-			url:        "/",
-			typeReqest: http.MethodGet,
-			want: want{
-				code:   200,
-				lenRes: 178,
-			},
-		},
-		{
-			name:       "negative test post metrics #2",
-			url:        "/",
-			typeReqest: http.MethodPost,
-			want: want{
-				code:   405,
-				lenRes: 0,
-			},
-		},
-	}
 	for i := 0; i < b.N; i++ {
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		w := httptest.NewRecorder()
