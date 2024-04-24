@@ -9,7 +9,6 @@ import (
 
 	"metrics/internal/logger"
 	"metrics/internal/store"
-	_ "net/http/pprof"
 )
 
 type Metrics struct {
@@ -28,15 +27,13 @@ func (mh *MetricsHandler) UpdateMetricJSONHandler(res http.ResponseWriter, req *
 	defer cancel()
 
 	var metrics Metrics
-	var buf bytes.Buffer
+	// var buf bytes.Buffer
 
-	_, err := buf.ReadFrom(req.Body)
+	req.Body = http.MaxBytesReader(res, req.Body, 1048576)
+	dec := json.NewDecoder(req.Body)
+	dec.DisallowUnknownFields()
+	err := dec.Decode(&metrics)
 	if err != nil {
-		res.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	if err = json.Unmarshal(buf.Bytes(), &metrics); err != nil {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}

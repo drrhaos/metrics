@@ -1,6 +1,9 @@
 package store
 
-import "context"
+import (
+	"context"
+	_ "net/http/pprof"
+)
 
 type StorageInterface interface {
 	SaveMetrics(filePath string) bool
