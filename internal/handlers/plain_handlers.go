@@ -32,6 +32,7 @@ const (
 	valueMetricConst  = "valueMetric"
 )
 
+// UpdateMetricHandler Обновляет значение метрики
 func (mh *MetricsHandler) UpdateMetricHandler(res http.ResponseWriter, req *http.Request, storage *store.StorageContext) {
 	if storage == nil {
 		panic("Storage nil")
@@ -81,6 +82,7 @@ func (mh *MetricsHandler) UpdateMetricHandler(res http.ResponseWriter, req *http
 	res.WriteHeader(http.StatusOK)
 }
 
+// GetMetricHandler возвращает текущее значение метрики в текстовом виде
 func (mh *MetricsHandler) GetMetricHandler(res http.ResponseWriter, req *http.Request, storage *store.StorageContext) {
 	if storage == nil {
 		panic("Storage nil")
@@ -126,6 +128,7 @@ func (mh *MetricsHandler) GetMetricHandler(res http.ResponseWriter, req *http.Re
 	res.WriteHeader(http.StatusOK)
 }
 
+// GetNameMetricsHandler возвращает сохранные метрики
 func (mh *MetricsHandler) GetNameMetricsHandler(res http.ResponseWriter, req *http.Request, storage *store.StorageContext) {
 	if storage == nil {
 		panic("Storage nil")
@@ -162,6 +165,7 @@ func (mh *MetricsHandler) GetNameMetricsHandler(res http.ResponseWriter, req *ht
 	res.WriteHeader(http.StatusOK)
 }
 
+// GetPing проверяет доступность базы данных
 func (mh *MetricsHandler) GetPing(res http.ResponseWriter, req *http.Request, storage *store.StorageContext) {
 
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)

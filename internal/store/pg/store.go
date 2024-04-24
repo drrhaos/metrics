@@ -15,10 +15,12 @@ import (
 
 var sleepStep = map[uint]int64{0: 1, 1: 3, 2: 5}
 
+// Database хранит пул коннектов
 type Database struct {
 	Conn *pgxpool.Pool
 }
 
+// NewDatabase создает новое подключение к базе данных
 func NewDatabase(uri string) *Database {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -42,6 +44,7 @@ func NewDatabase(uri string) *Database {
 	return db
 }
 
+// SaveMetrics заглушка
 func (db *Database) SaveMetrics(filePath string) bool {
 	if db != nil {
 		return true
@@ -50,6 +53,7 @@ func (db *Database) SaveMetrics(filePath string) bool {
 	}
 }
 
+// LoadMetrics заглушка
 func (db *Database) LoadMetrics(filePath string) bool {
 	if db != nil {
 		return true
@@ -58,10 +62,12 @@ func (db *Database) LoadMetrics(filePath string) bool {
 	}
 }
 
+// Close закрывает соединение с базой данных
 func (db *Database) Close() {
 	db.Conn.Close()
 }
 
+// Ping проверяет доступность хранилища
 func (db *Database) Ping(ctx context.Context) bool {
 	if err := db.Conn.Ping(ctx); err != nil {
 		return false
@@ -69,6 +75,7 @@ func (db *Database) Ping(ctx context.Context) bool {
 	return true
 }
 
+// Migrations создает таблицы базы данных ели они не существуют
 func (db *Database) Migrations(ctx context.Context) error {
 	var exist bool
 	err := db.Conn.QueryRow(ctx,
@@ -108,6 +115,7 @@ func (db *Database) Migrations(ctx context.Context) error {
 	return nil
 }
 
+// UpdateGauge обновляет метрику gauge
 func (db *Database) UpdateGauge(ctx context.Context, nameMetric string, valueMetric float64) bool {
 	err := retry.Do(
 		func() error {
@@ -132,6 +140,7 @@ func (db *Database) UpdateGauge(ctx context.Context, nameMetric string, valueMet
 	return true
 }
 
+// UpdateCounter обновляет метрику counter
 func (db *Database) UpdateCounter(ctx context.Context, nameMetric string, valueMetric int64) bool {
 	currentValue, exist := db.GetCounter(ctx, nameMetric)
 	if exist {
@@ -160,6 +169,7 @@ func (db *Database) UpdateCounter(ctx context.Context, nameMetric string, valueM
 	return true
 }
 
+// GetGauge возвращает метрику gauge
 func (db *Database) GetGauge(ctx context.Context, nameMetric string) (valueMetric float64, exists bool) {
 	err := retry.Do(
 		func() error {
@@ -182,6 +192,7 @@ func (db *Database) GetGauge(ctx context.Context, nameMetric string) (valueMetri
 	return valueMetric, true
 }
 
+// GetCounter возвращает метрику counters
 func (db *Database) GetCounter(ctx context.Context, nameMetric string) (valueMetric int64, exists bool) {
 	err := retry.Do(
 		func() error {
@@ -205,6 +216,7 @@ func (db *Database) GetCounter(ctx context.Context, nameMetric string) (valueMet
 	return valueMetric, true
 }
 
+// GetGauges возвращает метрики gauges
 func (db *Database) GetGauges(ctx context.Context) (map[string]float64, bool) {
 	valuesMetric := make(map[string]float64)
 	err := retry.Do(
@@ -240,6 +252,7 @@ func (db *Database) GetGauges(ctx context.Context) (map[string]float64, bool) {
 	return valuesMetric, true
 }
 
+// GetCounters возвращает метрики counters
 func (db *Database) GetCounters(ctx context.Context) (map[string]int64, bool) {
 	valuesMetric := make(map[string]int64)
 	err := retry.Do(

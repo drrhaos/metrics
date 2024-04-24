@@ -1,3 +1,4 @@
+// Модуль decompress предназначен распаковки упакованных в запросе данных
 package decompress
 
 import (
@@ -24,10 +25,12 @@ func newCompressReader(r io.ReadCloser) (*compressReader, error) {
 	}, nil
 }
 
+// Read читает данные
 func (c compressReader) Read(p []byte) (n int, err error) {
 	return c.zr.Read(p)
 }
 
+// Close закрывает ReadCloser
 func (c *compressReader) Close() error {
 	if err := c.r.Close(); err != nil {
 		return err
@@ -35,6 +38,7 @@ func (c *compressReader) Close() error {
 	return c.zr.Close()
 }
 
+// GzipDecompressMiddleware обработчик распакавывает тело ответа
 func GzipDecompressMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		contentEncoding := req.Header.Get("Content-Encoding")
