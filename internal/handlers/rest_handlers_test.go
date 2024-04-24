@@ -16,6 +16,180 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+func Benchmark_TestMetricsHandler_UpdateMetricJSONHandler(b *testing.B) {
+	stMetrics := &store.StorageContext{}
+	stMetrics.SetStorage(ramstorage.NewStorage())
+
+	var cfg configure.Config
+	cfg.ReadStartParams()
+
+	metricHandler := NewMetricHandler(cfg)
+
+	r := chi.NewRouter()
+
+	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetNameMetricsHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetPing, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetPing(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdatesMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricJSONHandler(w, r, stMetrics)
+	})
+
+	delt := int64(1111)
+	met := Metrics{
+		ID:    "PoolCounter",
+		MType: "counter",
+		Delta: &delt}
+
+	for i := 0; i < b.N; i++ {
+		bodyMetr, _ := json.Marshal(met)
+
+		req := httptest.NewRequest(http.MethodPost, urlUpdateMetricJSONConst, bytes.NewReader(bodyMetr))
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+
+	}
+
+	val := float64(1111.111)
+	met = Metrics{
+		ID:    "PoolCounter",
+		MType: "counter",
+		Value: &val}
+
+	for i := 0; i < b.N; i++ {
+		bodyMetr, _ := json.Marshal(met)
+
+		req := httptest.NewRequest(http.MethodPost, urlUpdateMetricJSONConst, bytes.NewReader(bodyMetr))
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+
+	}
+}
+
+func Benchmark_TestMetricsHandler_UpdatesMetricJSONHandler(b *testing.B) {
+	stMetrics := &store.StorageContext{}
+	stMetrics.SetStorage(ramstorage.NewStorage())
+
+	var cfg configure.Config
+	cfg.ReadStartParams()
+
+	metricHandler := NewMetricHandler(cfg)
+
+	r := chi.NewRouter()
+
+	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetNameMetricsHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetPing, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetPing(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdatesMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricJSONHandler(w, r, stMetrics)
+	})
+
+	delt := int64(1111)
+	valGauge := float64(1111.1)
+	var metrics []Metrics
+	metrics = append(metrics, Metrics{
+		ID:    "PoolCounter",
+		MType: "counter",
+		Delta: &delt})
+	metrics = append(metrics, Metrics{
+		ID:    "PoolGauge",
+		MType: "gauge",
+		Value: &valGauge})
+
+	for i := 0; i < b.N; i++ {
+		bodyMetr, _ := json.Marshal(metrics)
+
+		req := httptest.NewRequest(http.MethodPost, urlUpdatesMetricJSONConst, bytes.NewReader(bodyMetr))
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+
+	}
+}
+
+func Benchmark_TestMetricsHandler_GetMetricJSONHandler(b *testing.B) {
+	stMetrics := &store.StorageContext{}
+	mockStore := new(mocks.MockStore)
+	mockStore.On("GetCounter", mock.Anything, "PoolCounter").Return(int64(1111), true)
+	mockStore.On("GetCounter", mock.Anything, "PoolCounte").Return(int64(1111), false)
+	mockStore.On("GetGauge", mock.Anything, "PoolGauge").Return(float64(1111.1), true)
+	mockStore.On("GetGauge", mock.Anything, "PoolGaug").Return(float64(1111.1), false)
+	stMetrics.SetStorage(mockStore)
+
+	var cfg configure.Config
+	cfg.ReadStartParams()
+
+	metricHandler := NewMetricHandler(cfg)
+
+	r := chi.NewRouter()
+
+	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetNameMetricsHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetPing, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetPing(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdatesMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricJSONHandler(w, r, stMetrics)
+	})
+
+	dataMetric := Metrics{
+		ID:    "PoolCounter",
+		MType: "counter"}
+
+	for i := 0; i < b.N; i++ {
+		bodyMetr, _ := json.Marshal(dataMetric)
+		req := httptest.NewRequest(http.MethodPost, urlGetMetricJSONConst, bytes.NewReader(bodyMetr))
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+
+	}
+}
+
 func TestMetricsHandler_UpdateMetricJSONHandler(t *testing.T) {
 	stMetrics := &store.StorageContext{}
 	stMetrics.SetStorage(ramstorage.NewStorage())

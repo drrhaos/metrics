@@ -2,13 +2,12 @@ package handlers
 
 import (
 	"context"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-
 	"metrics/internal/server/configure"
 	"metrics/internal/store"
 	"metrics/internal/store/ramstorage"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +21,151 @@ const urlUpdatesMetricJSONConst = "/updates/"
 const urlGetMetricConst = "/value/{typeMetric}/{nameMetric}"
 const urlGetMetricJSONConst = "/value/"
 
-func Test_UpdateMetricHandler(t *testing.T) {
+func Benchmark_TestMetricsHandler_UpdateMetricHandler(b *testing.B) {
+	stMetrics := &store.StorageContext{}
+	stMetrics.SetStorage(ramstorage.NewStorage())
+
+	var cfg configure.Config
+	cfg.ReadStartParams()
+
+	metricHandler := NewMetricHandler(cfg)
+
+	r := chi.NewRouter()
+
+	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetNameMetricsHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetPing, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetPing(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdatesMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricJSONHandler(w, r, stMetrics)
+	})
+
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(http.MethodPost, "/update/gauge/NumGC/11", nil)
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+
+	}
+
+}
+
+func Benchmark_TestMetricsHandler_GetMetricHandler(b *testing.B) {
+	ctx := context.Background()
+
+	stMetrics := &store.StorageContext{}
+	stMetrics.SetStorage(ramstorage.NewStorage())
+
+	stMetrics.UpdateCounter(ctx, "testCounter", 10)
+	stMetrics.UpdateGauge(ctx, "testGauge", 11.1)
+	stMetrics.UpdateGauge(ctx, "testGauge2", 12.1)
+
+	var cfg configure.Config
+	cfg.ReadStartParams()
+
+	metricHandler := NewMetricHandler(cfg)
+
+	r := chi.NewRouter()
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetNameMetricsHandler(w, r, stMetrics)
+	})
+	r.Post("/update/{typeMetric}/{nameMetric}/{valueMetric}", func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricHandler(w, r, stMetrics)
+	})
+	r.Get("/value/{typeMetric}/{nameMetric}", func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricHandler(w, r, stMetrics)
+	})
+
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/value/gauge/testGauge", nil)
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+
+	}
+}
+
+func Benchmark_TestMetricsHandler_GetNameMetricsHandler(b *testing.B) {
+	ctx := context.Background()
+
+	stMetrics := &store.StorageContext{}
+	stMetrics.SetStorage(ramstorage.NewStorage())
+
+	stMetrics.UpdateCounter(ctx, "testCounter", 10)
+	stMetrics.UpdateGauge(ctx, "testGauge", 11.1)
+	stMetrics.UpdateGauge(ctx, "testGauge2", 12.1)
+
+	var cfg configure.Config
+	cfg.ReadStartParams()
+
+	metricHandler := NewMetricHandler(cfg)
+
+	r := chi.NewRouter()
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetNameMetricsHandler(w, r, stMetrics)
+	})
+	r.Post("/update/{typeMetric}/{nameMetric}/{valueMetric}", func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricHandler(w, r, stMetrics)
+	})
+	r.Get("/value/{typeMetric}/{nameMetric}", func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricHandler(w, r, stMetrics)
+	})
+
+	type want struct {
+		code   int
+		lenRes int
+	}
+	tests := []struct {
+		name       string
+		url        string
+		typeReqest string
+		want       want
+	}{
+		{
+			name:       "positive test get metrics #1",
+			url:        "/",
+			typeReqest: http.MethodGet,
+			want: want{
+				code:   200,
+				lenRes: 178,
+			},
+		},
+		{
+			name:       "negative test post metrics #2",
+			url:        "/",
+			typeReqest: http.MethodPost,
+			want: want{
+				code:   405,
+				lenRes: 0,
+			},
+		},
+	}
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+
+	}
+}
+
+func TestMetricsHandler_UpdateMetricHandler(t *testing.T) {
 	stMetrics := &store.StorageContext{}
 	stMetrics.SetStorage(ramstorage.NewStorage())
 
@@ -138,7 +281,7 @@ func Test_UpdateMetricHandler(t *testing.T) {
 	}
 }
 
-func Test_GetMetricHandler(t *testing.T) {
+func TestMetricsHandler_GetMetricHandler(t *testing.T) {
 	ctx := context.Background()
 
 	stMetrics := &store.StorageContext{}
@@ -254,7 +397,7 @@ func Test_GetMetricHandler(t *testing.T) {
 	}
 }
 
-func Test_GetNameMetricsHandler(t *testing.T) {
+func TestMetricsHandler_GetNameMetricsHandler(t *testing.T) {
 	ctx := context.Background()
 
 	stMetrics := &store.StorageContext{}

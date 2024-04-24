@@ -9,6 +9,7 @@ import (
 
 	"metrics/internal/logger"
 	"metrics/internal/store"
+	_ "net/http/pprof"
 )
 
 type Metrics struct {
