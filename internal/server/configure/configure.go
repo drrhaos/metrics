@@ -1,4 +1,4 @@
-// Модуль configure предназначен для настройки программы
+// Модуль configure предназначен для настройки программы.
 package configure
 
 import (
@@ -10,7 +10,7 @@ import (
 	"github.com/caarlos0/env/v10"
 )
 
-// Config хранит текущую конфигурацию сервиса
+// Config хранит текущую конфигурацию сервиса.
 type Config struct {
 	Address         string `env:"ADDRESS"`                        // адрес сервера
 	StoreInterval   int64  `env:"STORE_INTERVAL" envDefault:"-1"` // интервал сохранения данных
@@ -20,7 +20,7 @@ type Config struct {
 	Key             string `env:"KEY"`                            // ключ для проверки целостности данных в запросе
 }
 
-// ReadStartParams чтение настроек
+// ReadStartParams чтение настроек.
 func (cfg *Config) ReadStartParams() bool {
 	err := env.Parse(cfg)
 

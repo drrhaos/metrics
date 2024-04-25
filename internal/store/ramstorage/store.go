@@ -9,14 +9,14 @@ import (
 	"metrics/internal/logger"
 )
 
-// RAMStorage хранилище метрик
+// RAMStorage хранилище метрик.
 type RAMStorage struct {
 	Gauge   map[string]float64 `json:"gauge"`   // набор метрик counter
 	Counter map[string]int64   `json:"counter"` // набор метрик gauge
 	Mut     sync.Mutex         // мютекс
 }
 
-// NewStorage инициализарует хранилище
+// NewStorage инициализарует хранилище.
 func NewStorage() *RAMStorage {
 	return &RAMStorage{
 		Counter: make(map[string]int64),
@@ -25,7 +25,7 @@ func NewStorage() *RAMStorage {
 	}
 }
 
-// SaveMetrics сохраняет метрики
+// SaveMetrics сохраняет метрики.
 func (storage *RAMStorage) SaveMetrics(filePath string) bool {
 	if storage == nil {
 		return false
@@ -51,7 +51,7 @@ func (storage *RAMStorage) SaveMetrics(filePath string) bool {
 	return true
 }
 
-// LoadMetrics загружает метрики
+// LoadMetrics загружает метрики.
 func (storage *RAMStorage) LoadMetrics(filePath string) bool {
 	if storage == nil {
 		return false
@@ -86,7 +86,7 @@ func (storage *RAMStorage) LoadMetrics(filePath string) bool {
 	return true
 }
 
-// UpdateCounter обновляет метрику counter
+// UpdateCounter обновляет метрику counter.
 func (storage *RAMStorage) UpdateCounter(ctx context.Context, nameMetric string, valueMetric int64) bool {
 	if storage == nil {
 		return false
@@ -97,7 +97,7 @@ func (storage *RAMStorage) UpdateCounter(ctx context.Context, nameMetric string,
 	return true
 }
 
-// UpdateGauge обновляет метрику gauge
+// UpdateGauge обновляет метрику gauge.
 func (storage *RAMStorage) UpdateGauge(ctx context.Context, nameMetric string, valueMetric float64) bool {
 	if storage == nil {
 		return false
@@ -108,7 +108,7 @@ func (storage *RAMStorage) UpdateGauge(ctx context.Context, nameMetric string, v
 	return true
 }
 
-// GetGauges возвращает метрики gauges
+// GetGauges возвращает метрики gauges.
 func (storage *RAMStorage) GetGauges(ctx context.Context) (map[string]float64, bool) {
 	if storage == nil {
 		logger.Log.Panic("Хранилище не может быть nil")
@@ -119,7 +119,7 @@ func (storage *RAMStorage) GetGauges(ctx context.Context) (map[string]float64, b
 	return storage.Gauge, true
 }
 
-// GetCounters возвращает метрики counters
+// GetCounters возвращает метрики counters.
 func (storage *RAMStorage) GetCounters(ctx context.Context) (map[string]int64, bool) {
 	if storage == nil {
 		logger.Log.Panic("Хранилище не может быть nil")
@@ -130,7 +130,7 @@ func (storage *RAMStorage) GetCounters(ctx context.Context) (map[string]int64, b
 	return storage.Counter, true
 }
 
-// GetCounter возвращает метрику counters
+// GetCounter возвращает метрику counters.
 func (storage *RAMStorage) GetCounter(ctx context.Context, nameMetric string) (currentValue int64, exists bool) {
 	if storage == nil {
 		return currentValue, false
@@ -145,7 +145,7 @@ func (storage *RAMStorage) GetCounter(ctx context.Context, nameMetric string) (c
 	return currentValue, exists
 }
 
-// GetGauge возвращает метрику gauge
+// GetGauge возвращает метрику gauge.
 func (storage *RAMStorage) GetGauge(ctx context.Context, nameMetric string) (currentValue float64, exists bool) {
 	if storage == nil {
 		return currentValue, false
@@ -160,7 +160,7 @@ func (storage *RAMStorage) GetGauge(ctx context.Context, nameMetric string) (cur
 	return currentValue, exists
 }
 
-// Ping проверяет доступность хранилища
+// Ping проверяет доступность хранилища.
 func (storage *RAMStorage) Ping(ctx context.Context) bool {
 	return false
 }

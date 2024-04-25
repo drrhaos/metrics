@@ -11,7 +11,7 @@ import (
 	"metrics/internal/store"
 )
 
-// Metrics хранит информацию о метрике
+// Metrics хранит информацию о метрике.
 type Metrics struct {
 	ID    string   `json:"id"`              // имя метрики
 	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
@@ -19,7 +19,7 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
-// UpdateMetricJSONHandler обновляет значение метрики, принимает занчение в фомате JSON
+// UpdateMetricJSONHandler обновляет значение метрики, принимает занчение в фомате JSON.
 func (mh *MetricsHandler) UpdateMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *store.StorageContext) {
 	if storage == nil {
 		panic("Storage nil")
@@ -29,7 +29,6 @@ func (mh *MetricsHandler) UpdateMetricJSONHandler(res http.ResponseWriter, req *
 	defer cancel()
 
 	var metrics Metrics
-	// var buf bytes.Buffer
 
 	req.Body = http.MaxBytesReader(res, req.Body, 1048576)
 	dec := json.NewDecoder(req.Body)
@@ -99,7 +98,7 @@ func (mh *MetricsHandler) UpdateMetricJSONHandler(res http.ResponseWriter, req *
 	res.WriteHeader(http.StatusOK)
 }
 
-// UpdatesMetricJSONHandler обновляет несколько значений метрик, принимает значение в формате JSON
+// UpdatesMetricJSONHandler обновляет несколько значений метрик, принимает значение в формате JSON.
 func (mh *MetricsHandler) UpdatesMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *store.StorageContext) {
 	if storage == nil {
 		panic("Storage nil")
@@ -146,7 +145,7 @@ func (mh *MetricsHandler) UpdatesMetricJSONHandler(res http.ResponseWriter, req 
 	res.WriteHeader(http.StatusOK)
 }
 
-// GetMetricJSONHandler возвращает сохранное значение метрики в формате JSON
+// GetMetricJSONHandler возвращает сохранное значение метрики в формате JSON.
 func (mh *MetricsHandler) GetMetricJSONHandler(res http.ResponseWriter, req *http.Request, storage *store.StorageContext) {
 	if storage == nil {
 		panic("Storage nil")

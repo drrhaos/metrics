@@ -1,4 +1,4 @@
-// Модуль logger предназначен для логирования в агенте и сервере
+// Модуль logger предназначен для логирования в агенте и сервере.
 package logger
 
 import (
@@ -10,7 +10,7 @@ import (
 
 var Log *zap.Logger = zap.NewNop()
 
-// ResponseWriter интерфейс представляющий собой объект, отвечающий за отправку ответа клиенту
+// ResponseWriter интерфейс представляющий собой объект, отвечающий за отправку ответа клиенту.
 type ResponseWriter interface {
 	Header() http.Header
 	Write([]byte) (int, error)
@@ -29,20 +29,20 @@ type (
 	}
 )
 
-// Write подсчитывает размер тела ответа
+// Write подсчитывает размер тела ответа.
 func (r *loggingResponseWriter) Write(b []byte) (int, error) {
 	size, err := r.ResponseWriter.Write(b)
 	r.responseData.size += size
 	return size, err
 }
 
-// WriteHeader обновление статуса ответа
+// WriteHeader обновление статуса ответа.
 func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	r.ResponseWriter.WriteHeader(statusCode)
 	r.responseData.status = statusCode
 }
 
-// Initialize инициализация логгера
+// Initialize инициализация логгера.
 func Initialize(level string) error {
 	lvl, err := zap.ParseAtomicLevel(level)
 	if err != nil {
@@ -58,7 +58,7 @@ func Initialize(level string) error {
 	return nil
 }
 
-// RequestLogger обработчик запроса, формирует лог
+// RequestLogger обработчик запроса, формирует лог.
 func RequestLogger(h http.Handler) http.Handler {
 	logFn := func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()

@@ -1,4 +1,4 @@
-// Модуль signature предназначен для проверки целостности запроса
+// Модуль signature предназначен для проверки целостности запроса.
 package signature
 
 import (
@@ -17,7 +17,7 @@ type hashResponseWriter struct {
 	key string
 }
 
-// AddSignatureMiddleware добавляет ключ проверки целостности
+// AddSignatureMiddleware добавляет ключ проверки целостности.
 func AddSignatureMiddleware(key string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -32,7 +32,7 @@ func AddSignatureMiddleware(key string) func(http.Handler) http.Handler {
 	}
 }
 
-// Write записывает в заголовок hash для проверки целостности
+// Write записывает в заголовок hash для проверки целостности.
 func (hrw *hashResponseWriter) Write(b []byte) (int, error) {
 	h := hmac.New(sha256.New, []byte(hrw.key))
 	h.Write(b)
@@ -42,7 +42,7 @@ func (hrw *hashResponseWriter) Write(b []byte) (int, error) {
 	return hrw.ResponseWriter.Write(b)
 }
 
-// CheckSignaturMiddleware проверяет целостность пакета
+// CheckSignaturMiddleware проверяет целостность пакета.
 func CheckSignaturMiddleware(key string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
