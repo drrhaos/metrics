@@ -25,14 +25,13 @@ const urlUpdatesMetricJSONConst = "/updates/"
 const urlGetMetricConst = "/value/{typeMetric}/{nameMetric}"
 const urlGetMetricJSONConst = "/value/"
 
+var cfg = configure.Config{}
+
 func ExampleMetricsHandler_UpdateMetricHandler() {
 	stMetrics := &store.StorageContext{}
 	stMetrics.SetStorage(ramstorage.NewStorage())
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := handlers.NewMetricHandler(cfg)
+	metricHandler := handlers.NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 
@@ -87,10 +86,7 @@ func ExampleMetricsHandler_GetMetricHandler() {
 	stMetrics.UpdateCounter(context.Background(), "PoolCounter", 11)
 	stMetrics.UpdateGauge(context.Background(), "NumGC", 11.1)
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := handlers.NewMetricHandler(cfg)
+	metricHandler := handlers.NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 
@@ -145,10 +141,7 @@ func ExampleMetricsHandler_GetNameMetricsHandler() {
 	stMetrics.UpdateCounter(context.Background(), "PoolCounter", 11)
 	stMetrics.UpdateGauge(context.Background(), "NumGC", 11.1)
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := handlers.NewMetricHandler(cfg)
+	metricHandler := handlers.NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 
@@ -194,10 +187,7 @@ func ExampleMetricsHandler_GetPing() {
 	stMetrics.UpdateCounter(context.Background(), "PoolCounter", 11)
 	stMetrics.UpdateGauge(context.Background(), "NumGC", 11.1)
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := handlers.NewMetricHandler(cfg)
+	metricHandler := handlers.NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 
@@ -255,10 +245,7 @@ func ExampleMetricsHandler_UpdateMetricJSONHandler() {
 	stMetrics := &store.StorageContext{}
 	stMetrics.SetStorage(ramstorage.NewStorage())
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := handlers.NewMetricHandler(cfg)
+	metricHandler := handlers.NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 
@@ -331,10 +318,7 @@ func ExampleMetricsHandler_UpdatesMetricJSONHandler() {
 	stMetrics := &store.StorageContext{}
 	stMetrics.SetStorage(ramstorage.NewStorage())
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := handlers.NewMetricHandler(cfg)
+	metricHandler := handlers.NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 
@@ -383,10 +367,7 @@ func ExampleMetricsHandler_GetMetricJSONHandler() {
 	mockStore.On("GetGauge", mock.Anything, "PoolGaug").Return(float64(1111.1), false)
 	stMetrics.SetStorage(mockStore)
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := handlers.NewMetricHandler(cfg)
+	metricHandler := handlers.NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 

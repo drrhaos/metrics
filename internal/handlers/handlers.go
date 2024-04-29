@@ -7,11 +7,11 @@ import (
 
 // MetricsHandler хранит информацию о доступных ручках.
 type MetricsHandler struct {
-	cfg configure.Config
+	cfg *configure.Config
 }
 
 // NewMetricHandler инициализирует новый объект типа MetricsHandler.
-func NewMetricHandler(cfg configure.Config) *MetricsHandler {
+func NewMetricHandler(cfg *configure.Config) *MetricsHandler {
 	return &MetricsHandler{
 		cfg: cfg,
 	}

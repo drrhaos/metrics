@@ -21,7 +21,8 @@ type Config struct {
 }
 
 // ReadStartParams чтение настроек.
-func (cfg *Config) ReadStartParams() bool {
+func NewConfig() *Config {
+	var cfg Config
 	err := env.Parse(cfg)
 
 	if err != nil {
@@ -60,12 +61,11 @@ func (cfg *Config) ReadStartParams() bool {
 	if cfg.Key == "" {
 		cfg.Key = *key
 	}
-
 	_, errURL := url.ParseRequestURI("http://" + cfg.Address)
 	if errURL != nil {
 		flag.PrintDefaults()
-		return false
+		return nil
 	} else {
-		return true
+		return &cfg
 	}
 }

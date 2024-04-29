@@ -32,12 +32,10 @@ const urlGetMetricJSONConst = "/value/"
 
 const flagLogLevel = "info"
 
-var cfg configure.Config
-
 func main() {
-	ok := cfg.ReadStartParams()
+	cfg := configure.NewConfig()
 
-	if !ok {
+	if cfg == nil {
 		flag.PrintDefaults()
 		os.Exit(0)
 	}

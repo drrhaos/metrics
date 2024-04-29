@@ -21,14 +21,13 @@ const urlUpdatesMetricJSONConst = "/updates/"
 const urlGetMetricConst = "/value/{typeMetric}/{nameMetric}"
 const urlGetMetricJSONConst = "/value/"
 
+var cfg = configure.Config{}
+
 func Benchmark_TestMetricsHandler_UpdateMetricHandler(b *testing.B) {
 	stMetrics := &store.StorageContext{}
 	stMetrics.SetStorage(ramstorage.NewStorage())
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := NewMetricHandler(cfg)
+	metricHandler := NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 
@@ -74,10 +73,7 @@ func Benchmark_TestMetricsHandler_GetMetricHandler(b *testing.B) {
 	stMetrics.UpdateGauge(ctx, "testGauge", 11.1)
 	stMetrics.UpdateGauge(ctx, "testGauge2", 12.1)
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := NewMetricHandler(cfg)
+	metricHandler := NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 
@@ -110,10 +106,7 @@ func Benchmark_TestMetricsHandler_GetNameMetricsHandler(b *testing.B) {
 	stMetrics.UpdateGauge(ctx, "testGauge", 11.1)
 	stMetrics.UpdateGauge(ctx, "testGauge2", 12.1)
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := NewMetricHandler(cfg)
+	metricHandler := NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 
@@ -140,10 +133,7 @@ func TestMetricsHandler_UpdateMetricHandler(t *testing.T) {
 	stMetrics := &store.StorageContext{}
 	stMetrics.SetStorage(ramstorage.NewStorage())
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := NewMetricHandler(cfg)
+	metricHandler := NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 
@@ -262,10 +252,7 @@ func TestMetricsHandler_GetMetricHandler(t *testing.T) {
 	stMetrics.UpdateGauge(ctx, "testGauge", 11.1)
 	stMetrics.UpdateGauge(ctx, "testGauge2", 12.1)
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := NewMetricHandler(cfg)
+	metricHandler := NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 
@@ -378,10 +365,7 @@ func TestMetricsHandler_GetNameMetricsHandler(t *testing.T) {
 	stMetrics.UpdateGauge(ctx, "testGauge", 11.1)
 	stMetrics.UpdateGauge(ctx, "testGauge2", 12.1)
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := NewMetricHandler(cfg)
+	metricHandler := NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 

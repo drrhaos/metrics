@@ -3,7 +3,6 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"metrics/internal/server/configure"
 	"metrics/internal/store"
 	"metrics/internal/store/mocks"
 	"metrics/internal/store/ramstorage"
@@ -20,10 +19,7 @@ func Benchmark_TestMetricsHandler_UpdateMetricJSONHandler(b *testing.B) {
 	stMetrics := &store.StorageContext{}
 	stMetrics.SetStorage(ramstorage.NewStorage())
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := NewMetricHandler(cfg)
+	metricHandler := NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 
@@ -70,10 +66,7 @@ func Benchmark_TestMetricsHandler_UpdatesMetricJSONHandler(b *testing.B) {
 	stMetrics := &store.StorageContext{}
 	stMetrics.SetStorage(ramstorage.NewStorage())
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := NewMetricHandler(cfg)
+	metricHandler := NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 
@@ -131,10 +124,7 @@ func Benchmark_TestMetricsHandler_GetMetricJSONHandler(b *testing.B) {
 	mockStore.On("GetGauge", mock.Anything, "PoolGaug").Return(float64(1111.1), false)
 	stMetrics.SetStorage(mockStore)
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := NewMetricHandler(cfg)
+	metricHandler := NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 
@@ -178,10 +168,7 @@ func TestMetricsHandler_UpdateMetricJSONHandler(t *testing.T) {
 	stMetrics := &store.StorageContext{}
 	stMetrics.SetStorage(ramstorage.NewStorage())
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := NewMetricHandler(cfg)
+	metricHandler := NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 
@@ -285,10 +272,7 @@ func TestMetricsHandler_UpdatesMetricJSONHandler(t *testing.T) {
 	stMetrics := &store.StorageContext{}
 	stMetrics.SetStorage(ramstorage.NewStorage())
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := NewMetricHandler(cfg)
+	metricHandler := NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 
@@ -402,10 +386,7 @@ func TestMetricsHandler_GetMetricJSONHandler(t *testing.T) {
 	mockStore.On("GetGauge", mock.Anything, "PoolGaug").Return(float64(1111.1), false)
 	stMetrics.SetStorage(mockStore)
 
-	var cfg configure.Config
-	cfg.ReadStartParams()
-
-	metricHandler := NewMetricHandler(cfg)
+	metricHandler := NewMetricHandler(&cfg)
 
 	r := chi.NewRouter()
 
