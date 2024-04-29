@@ -1,50 +1,79 @@
 package handlers_test
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
-	_ "metrics/internal/handlers"
+	"metrics/internal/handlers"
 	"metrics/internal/server/configure"
+	"metrics/internal/store"
+	"metrics/internal/store/mocks"
+	"metrics/internal/store/ramstorage"
 	"net/http"
+	"net/http/httptest"
+
+	"github.com/go-chi/chi"
+	"github.com/stretchr/testify/mock"
 )
 
+const urlGetMetricsConst = "/"
+const urlGetPing = "/ping"
+const urlUpdateMetricConst = "/update/{typeMetric}/{nameMetric}/{valueMetric}"
+const urlUpdateMetricJSONConst = "/update/"
+const urlUpdatesMetricJSONConst = "/updates/"
+const urlGetMetricConst = "/value/{typeMetric}/{nameMetric}"
+const urlGetMetricJSONConst = "/value/"
+
 func ExampleMetricsHandler_UpdateMetricHandler() {
+	stMetrics := &store.StorageContext{}
+	stMetrics.SetStorage(ramstorage.NewStorage())
+
 	var cfg configure.Config
 	cfg.ReadStartParams()
 
-	typeMetric := "counter"
-	nameMetric := "ddd"
-	valueMetric := 11
+	metricHandler := handlers.NewMetricHandler(cfg)
 
-	client := &http.Client{}
-	urlStr := fmt.Sprintf("http://%s/update/%s/%s/%d", cfg.Address, typeMetric, nameMetric, valueMetric)
+	r := chi.NewRouter()
 
-	r, err := http.NewRequest(http.MethodPost, urlStr, nil)
-	if err != nil {
-		return
-	}
-	r.Header.Set("Content-Type", "application/json")
-	resp, err := client.Do(r)
-	if err != nil {
-		return
-	}
+	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetNameMetricsHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetPing, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetPing(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdatesMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricJSONHandler(w, r, stMetrics)
+	})
+
+	req := httptest.NewRequest(http.MethodPost, "/update/gauge/NumGC/11.1", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	resp := w.Result()
 	defer resp.Body.Close()
+
 	fmt.Println(resp.StatusCode)
 
-	typeMetric = "gauge"
-	nameMetric = "ddd"
-	gaugeMetric := 11.1
+	req = httptest.NewRequest(http.MethodPost, "/update/counter/PoolCounret/11", nil)
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
 
-	urlStr = fmt.Sprintf("http://%s/update/%s/%s/%f", cfg.Address, typeMetric, nameMetric, gaugeMetric)
-
-	r, err = http.NewRequest(http.MethodPost, urlStr, nil)
-	if err != nil {
-		return
-	}
-	resp, err = client.Do(r)
-	if err != nil {
-		return
-	}
+	resp = w.Result()
 	defer resp.Body.Close()
+
 	fmt.Println(resp.StatusCode)
 
 	// Output:
@@ -52,183 +81,351 @@ func ExampleMetricsHandler_UpdateMetricHandler() {
 	// 200
 }
 
-// func ExampleMetricsHandler_GetMetricHandler() {
+func ExampleMetricsHandler_GetMetricHandler() {
+	stMetrics := &store.StorageContext{}
+	stMetrics.SetStorage(ramstorage.NewStorage())
+	stMetrics.UpdateCounter(context.Background(), "PoolCounter", 11)
+	stMetrics.UpdateGauge(context.Background(), "NumGC", 11.1)
 
-// 	typeMetric := "counter"
-// 	nameMetric := "ddd"
+	var cfg configure.Config
+	cfg.ReadStartParams()
 
-// 	client := &http.Client{}
-// 	urlStr := fmt.Sprintf("http://127.0.0.1:8080/value/%s/%s", typeMetric, nameMetric)
+	metricHandler := handlers.NewMetricHandler(cfg)
 
-// 	r, _ := http.NewRequest(http.MethodGet, urlStr, nil)
-// 	r.Header.Set("Content-Type", "application/json")
-// 	resp, err := client.Do(r)
-// 	if err != nil {
-// 		logger.Log.Warn("Не удалось отправить запрос", zap.Error(err))
-// 	}
-// 	defer resp.Body.Close()
-// 	fmt.Println(resp.StatusCode)
+	r := chi.NewRouter()
 
-// 	typeMetric = "gauge"
-// 	nameMetric = "ddd"
+	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetNameMetricsHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetPing, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetPing(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdatesMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricJSONHandler(w, r, stMetrics)
+	})
 
-// 	urlStr = fmt.Sprintf("http://127.0.0.1:8080/value/%s/%s", typeMetric, nameMetric)
+	req := httptest.NewRequest(http.MethodGet, "/value/gauge/NumGC", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
 
-// 	r, _ = http.NewRequest(http.MethodGet, urlStr, nil)
-// 	resp, err = client.Do(r)
-// 	if err != nil {
-// 		logger.Log.Warn("Не удалось отправить запрос", zap.Error(err))
-// 	}
-// 	defer resp.Body.Close()
-// 	fmt.Println(resp.StatusCode)
+	resp := w.Result()
+	defer resp.Body.Close()
 
-// 	// Output:
-// 	// 200
-// 	// 200
-// }
+	fmt.Println(resp.StatusCode)
 
-// func ExampleMetricsHandler_GetNameMetricsHandler() {
+	req = httptest.NewRequest(http.MethodGet, "/value/counter/PoolCounter", nil)
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
 
-// 	client := &http.Client{}
-// 	urlStr := "http://127.0.0.1:8080/"
+	resp = w.Result()
+	defer resp.Body.Close()
 
-// 	r, _ := http.NewRequest(http.MethodGet, urlStr, nil)
-// 	r.Header.Set("Content-Type", "application/json")
-// 	resp, err := client.Do(r)
-// 	if err != nil {
-// 		logger.Log.Warn("Не удалось отправить запрос", zap.Error(err))
-// 	}
-// 	defer resp.Body.Close()
-// 	fmt.Println(resp.StatusCode)
+	fmt.Println(resp.StatusCode)
 
-// 	// Output:
-// 	// 200
-// }
+	// Output:
+	// 200
+	// 200
+}
 
-// func ExampleMetricsHandler_GetPing() {
+func ExampleMetricsHandler_GetNameMetricsHandler() {
+	stMetrics := &store.StorageContext{}
+	stMetrics.SetStorage(ramstorage.NewStorage())
+	stMetrics.UpdateCounter(context.Background(), "PoolCounter", 11)
+	stMetrics.UpdateGauge(context.Background(), "NumGC", 11.1)
 
-// 	client := &http.Client{}
-// 	urlStr := "http://127.0.0.1:8080/ping"
+	var cfg configure.Config
+	cfg.ReadStartParams()
 
-// 	r, _ := http.NewRequest(http.MethodGet, urlStr, nil)
-// 	r.Header.Set("Content-Type", "application/json")
-// 	resp, err := client.Do(r)
-// 	if err != nil {
-// 		logger.Log.Warn("Не удалось отправить запрос", zap.Error(err))
-// 	}
-// 	defer resp.Body.Close()
-// 	fmt.Println(resp.StatusCode)
+	metricHandler := handlers.NewMetricHandler(cfg)
 
-// 	// Output:
-// 	// 500
-// }
+	r := chi.NewRouter()
 
-// func ExampleMetricsHandler_UpdateMetricJSONHandler() {
+	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetNameMetricsHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetPing, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetPing(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdatesMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricJSONHandler(w, r, stMetrics)
+	})
 
-// 	deltaCur := int64(111)
-// 	metricCounter := Metrics{
-// 		ID:    "PoolCount",
-// 		MType: "counter",
-// 		Delta: &deltaCur,
-// 	}
-// 	valCur := float64(111)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
 
-// 	metricGauge := Metrics{
-// 		ID:    "PoolCount",
-// 		MType: "gauge",
-// 		Value: &valCur,
-// 	}
+	resp := w.Result()
+	defer resp.Body.Close()
 
-// 	client := &http.Client{}
-// 	urlStr := "http://127.0.0.1:8080/update/"
+	fmt.Println(resp.StatusCode)
 
-// 	var buf bytes.Buffer
-// 	json.NewEncoder(&buf).Encode(metricCounter)
+	// Output:
+	// 200
+}
 
-// 	r, _ := http.NewRequest(http.MethodPost, urlStr, &buf)
-// 	r.Header.Set("Content-Type", "application/json")
-// 	resp, err := client.Do(r)
-// 	if err != nil {
-// 		logger.Log.Warn("Не удалось отправить запрос", zap.Error(err))
-// 	}
-// 	defer resp.Body.Close()
-// 	fmt.Println(resp.StatusCode)
+func ExampleMetricsHandler_GetPing() {
 
-// 	json.NewEncoder(&buf).Encode(metricGauge)
+	stMetrics := &store.StorageContext{}
+	stMetrics.SetStorage(ramstorage.NewStorage())
+	stMetrics.UpdateCounter(context.Background(), "PoolCounter", 11)
+	stMetrics.UpdateGauge(context.Background(), "NumGC", 11.1)
 
-// 	r, _ = http.NewRequest(http.MethodPost, urlStr, &buf)
-// 	r.Header.Set("Content-Type", "application/json")
-// 	resp, err = client.Do(r)
-// 	if err != nil {
-// 		logger.Log.Warn("Не удалось отправить запрос", zap.Error(err))
-// 	}
-// 	defer resp.Body.Close()
-// 	fmt.Println(resp.StatusCode)
+	var cfg configure.Config
+	cfg.ReadStartParams()
 
-// 	// Output:
-// 	// 200
-// 	// 200
-// }
+	metricHandler := handlers.NewMetricHandler(cfg)
 
-// func ExampleMetricsHandler_UpdatesMetricJSONHandler() {
+	r := chi.NewRouter()
 
-// 	var metrics []Metrics
-// 	deltaCur := int64(111)
-// 	metric := Metrics{
-// 		ID:    "PoolCount",
-// 		MType: "counter",
-// 		Delta: &deltaCur,
-// 	}
+	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetNameMetricsHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetPing, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetPing(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdatesMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricJSONHandler(w, r, stMetrics)
+	})
 
-// 	metrics = append(metrics, metric)
-// 	valCur := float64(111.1)
-// 	metric = Metrics{
-// 		ID:    "PoolCount",
-// 		MType: "gauge",
-// 		Value: &valCur,
-// 	}
-// 	metrics = append(metrics, metric)
+	req := httptest.NewRequest(http.MethodGet, "/ping", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
 
-// 	client := &http.Client{}
-// 	urlStr := "http://127.0.0.1:8080/updates/"
+	resp := w.Result()
+	defer resp.Body.Close()
 
-// 	var buf bytes.Buffer
-// 	json.NewEncoder(&buf).Encode(metrics)
+	fmt.Println(resp.StatusCode)
 
-// 	r, _ := http.NewRequest(http.MethodPost, urlStr, &buf)
-// 	r.Header.Set("Content-Type", "application/json")
-// 	resp, err := client.Do(r)
-// 	if err != nil {
-// 		logger.Log.Warn("Не удалось отправить запрос", zap.Error(err))
-// 	}
-// 	defer resp.Body.Close()
-// 	fmt.Println(resp.StatusCode)
+	// Output:
+	// 500
+}
 
-// 	// Output:
-// 	// 200
-// }
+func ExampleMetricsHandler_UpdateMetricJSONHandler() {
 
-// func ExampleMetricsHandler_GetMetricJSONHandler() {
+	deltaCur := int64(11)
+	metricCounter := handlers.Metrics{
+		ID:    "PoolCounter",
+		MType: "counter",
+		Delta: &deltaCur,
+	}
+	valCur := float64(11.1)
 
-// 	metric := Metrics{
-// 		ID:    "PoolCount",
-// 		MType: "counter",
-// 	}
-// 	var buf bytes.Buffer
-// 	json.NewEncoder(&buf).Encode(metric)
+	metricGauge := handlers.Metrics{
+		ID:    "NumGC",
+		MType: "gauge",
+		Value: &valCur,
+	}
 
-// 	client := &http.Client{}
-// 	urlStr := "http://127.0.0.1:8080//"
+	stMetrics := &store.StorageContext{}
+	stMetrics.SetStorage(ramstorage.NewStorage())
 
-// 	r, _ := http.NewRequest(http.MethodPost, urlStr, &buf)
-// 	r.Header.Set("Content-Type", "application/json")
-// 	resp, err := client.Do(r)
-// 	if err != nil {
-// 		logger.Log.Warn("Не удалось отправить запрос", zap.Error(err))
-// 	}
-// 	defer resp.Body.Close()
-// 	fmt.Println(resp.StatusCode)
+	var cfg configure.Config
+	cfg.ReadStartParams()
 
-// 	// Output:
-// 	// 404
-// }
+	metricHandler := handlers.NewMetricHandler(cfg)
+
+	r := chi.NewRouter()
+
+	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetNameMetricsHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetPing, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetPing(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdatesMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricJSONHandler(w, r, stMetrics)
+	})
+
+	bodyMetr, _ := json.Marshal(metricCounter)
+	req := httptest.NewRequest(http.MethodPost, urlUpdateMetricJSONConst, bytes.NewReader(bodyMetr))
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	resp := w.Result()
+	defer resp.Body.Close()
+
+	fmt.Println(resp.StatusCode)
+
+	bodyMetr, _ = json.Marshal(metricGauge)
+	req = httptest.NewRequest(http.MethodPost, urlUpdateMetricJSONConst, bytes.NewReader(bodyMetr))
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	resp = w.Result()
+	defer resp.Body.Close()
+
+	fmt.Println(resp.StatusCode)
+
+	// Output:
+	// 200
+	// 200
+}
+
+func ExampleMetricsHandler_UpdatesMetricJSONHandler() {
+
+	var metrics []handlers.Metrics
+	deltaCur := int64(111)
+	metric := handlers.Metrics{
+		ID:    "PoolCount",
+		MType: "counter",
+		Delta: &deltaCur,
+	}
+
+	metrics = append(metrics, metric)
+	valCur := float64(111.1)
+	metric = handlers.Metrics{
+		ID:    "PoolCount",
+		MType: "gauge",
+		Value: &valCur,
+	}
+	metrics = append(metrics, metric)
+
+	stMetrics := &store.StorageContext{}
+	stMetrics.SetStorage(ramstorage.NewStorage())
+
+	var cfg configure.Config
+	cfg.ReadStartParams()
+
+	metricHandler := handlers.NewMetricHandler(cfg)
+
+	r := chi.NewRouter()
+
+	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetNameMetricsHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetPing, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetPing(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdatesMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricJSONHandler(w, r, stMetrics)
+	})
+
+	bodyMetr, _ := json.Marshal(metrics)
+	req := httptest.NewRequest(http.MethodPost, urlUpdatesMetricJSONConst, bytes.NewReader(bodyMetr))
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	resp := w.Result()
+	defer resp.Body.Close()
+
+	fmt.Println(resp.StatusCode)
+
+	// Output:
+	// 200
+}
+
+func ExampleMetricsHandler_GetMetricJSONHandler() {
+	stMetrics := &store.StorageContext{}
+	mockStore := new(mocks.MockStore)
+	mockStore.On("GetCounter", mock.Anything, "PoolCounter").Return(int64(1111), true)
+	mockStore.On("GetCounter", mock.Anything, "PoolCounte").Return(int64(1111), false)
+	mockStore.On("GetGauge", mock.Anything, "PoolGauge").Return(float64(1111.1), true)
+	mockStore.On("GetGauge", mock.Anything, "PoolGaug").Return(float64(1111.1), false)
+	stMetrics.SetStorage(mockStore)
+
+	var cfg configure.Config
+	cfg.ReadStartParams()
+
+	metricHandler := handlers.NewMetricHandler(cfg)
+
+	r := chi.NewRouter()
+
+	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetNameMetricsHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetPing, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetPing(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdateMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdateMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Post(urlUpdatesMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
+	})
+	r.Get(urlGetMetricConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricHandler(w, r, stMetrics)
+	})
+	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.GetMetricJSONHandler(w, r, stMetrics)
+	})
+
+	dataMetric := handlers.Metrics{
+		ID:    "PoolCounter",
+		MType: "counter"}
+	bodyMetr, _ := json.Marshal(dataMetric)
+	req := httptest.NewRequest(http.MethodPost, urlGetMetricJSONConst, bytes.NewReader(bodyMetr))
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	resp := w.Result()
+	defer resp.Body.Close()
+
+	fmt.Println(resp.StatusCode)
+
+	// Output:
+	// 200
+}
