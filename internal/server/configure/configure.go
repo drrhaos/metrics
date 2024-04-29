@@ -28,14 +28,13 @@ func (cfg *Config) ReadStartParams() bool {
 		logger.Log.Info("Не удалось найти переменные окружения ")
 	}
 
-	flagConf := flag.NewFlagSet("address", flag.ExitOnError)
-	address := flagConf.String("a", "127.0.0.1:8080", "Сетевой адрес host:port")
-	storeInterval := flagConf.Int64("i", 300, "Интервал сохранения показаний")
-	fileStoragePath := flagConf.String("f", "/tmp/metrics-db.json", "Путь к файлу с показаниями")
-	restore := flagConf.Bool("r", true, "Загружать последние сохранения показаний")
-	databaseDsn := flagConf.String("d", "",
+	address := flag.String("a", "127.0.0.1:8080", "Сетевой адрес host:port")
+	storeInterval := flag.Int64("i", 300, "Интервал сохранения показаний")
+	fileStoragePath := flag.String("f", "/tmp/metrics-db.json", "Путь к файлу с показаниями")
+	restore := flag.Bool("r", true, "Загружать последние сохранения показаний")
+	databaseDsn := flag.String("d", "",
 		"Сетевой адрес базя данных postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable")
-	key := flagConf.String("k", "", "sha256 key for encryption of transmitted data")
+	key := flag.String("k", "", "sha256 key for encryption of transmitted data")
 
 	flag.Parse()
 	if cfg.Address == "" {
