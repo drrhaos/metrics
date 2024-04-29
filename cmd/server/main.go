@@ -33,9 +33,10 @@ const urlGetMetricJSONConst = "/value/"
 const flagLogLevel = "info"
 
 func main() {
-	cfg := configure.NewConfig()
+	var cfg configure.Config
+	ok := cfg.ReadConfig()
 
-	if cfg == nil {
+	if !ok {
 		flag.PrintDefaults()
 		os.Exit(0)
 	}
@@ -76,7 +77,7 @@ func main() {
 
 	logger.Log.Info("Сервер запущен", zap.String("адрес", cfg.Address))
 
-	metricHandler := handlers.NewMetricHandler(cfg)
+	metricHandler := handlers.NewMetricHandler(&cfg)
 
 	r.Get(urlGetMetricsConst, func(w http.ResponseWriter, r *http.Request) {
 		metricHandler.GetNameMetricsHandler(w, r, stMetrics)
