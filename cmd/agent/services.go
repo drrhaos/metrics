@@ -94,7 +94,7 @@ func sendAllMetric(ctx context.Context, metrics []Metrics) {
 
 	buf, err := compressReqData(reqData)
 	if err != nil {
-		logger.Log.Warn("Не сжать данные", zap.Error(err))
+		logger.Log.Warn("Не удалось сжать данные", zap.Error(err))
 		return
 	}
 	err = retry.Do(
@@ -102,7 +102,7 @@ func sendAllMetric(ctx context.Context, metrics []Metrics) {
 			r, _ := http.NewRequest(http.MethodPost, urlStr, buf)
 			r = r.WithContext(ctx)
 			r.Header.Set("Content-Type", "application/json")
-			r.Header.Set("Content-Encoding", "gzip")
+			r.Header.Set("", "gzip")
 			if cfg.Key != "" {
 				h := hmac.New(sha256.New, []byte(cfg.Key))
 				h.Write(reqData)
