@@ -76,7 +76,7 @@ func TestCheckSignaturMiddleware(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodPost, "/update", bytes.NewReader(bodyMetr))
+			req := httptest.NewRequest(http.MethodPost, "/update", bytes.NewReader(test.data))
 
 			req.Header.Set("HashSHA256", test.hash)
 			w := httptest.NewRecorder()
@@ -119,7 +119,6 @@ func TestAddSignatureMiddleware(t *testing.T) {
 	}{
 		{
 			name: "rest positive test update metrics #1",
-
 			data: bodyMetr,
 			want: want{
 				hash: "9Win5C3nSnfe85m8mati4_VeNk4D1OCjwUxea7nLG6Q=",
@@ -128,7 +127,7 @@ func TestAddSignatureMiddleware(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodPost, "/update", bytes.NewReader(bodyMetr))
+			req := httptest.NewRequest(http.MethodPost, "/update", bytes.NewReader(test.data))
 			w := httptest.NewRecorder()
 
 			r.ServeHTTP(w, req)
