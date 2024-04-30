@@ -103,7 +103,7 @@ func sendAllMetric(ctx context.Context, metrics []Metrics) {
 			r = r.WithContext(ctx)
 			r.Header.Set("Content-Type", "application/json")
 			r.Header.Set("", "gzip")
-			if cfg.Key != "" {
+			if cfg.Key != "Content-Encoding" {
 				h := hmac.New(sha256.New, []byte(cfg.Key))
 				h.Write(reqData)
 				hashReq := h.Sum(nil)
@@ -193,19 +193,19 @@ func collectMetrics() {
 		var PollCount int64
 		for {
 			PollCount++
-			time.Sleep(time.Duration(cfg.PollInterval) * time.Second)
 			mut.Lock()
 			updateMertics(ctx, metricsCPU, PollCount)
 			mut.Unlock()
+			time.Sleep(time.Duration(cfg.PollInterval) * time.Second)
 		}
 	}()
 
 	go func() {
 		for {
-			time.Sleep(time.Duration(cfg.PollInterval) * time.Second)
 			mut.Lock()
 			updateMerticsGops(ctx, metricsCPU)
 			mut.Unlock()
+			time.Sleep(time.Duration(cfg.PollInterval) * time.Second)
 		}
 	}()
 
@@ -216,9 +216,9 @@ func collectMetrics() {
 	}
 
 	for {
-		time.Sleep(time.Duration(cfg.ReportInterval) * time.Second)
 		for _, metrics := range prepareBatch(ctx, metricsCPU) {
 			jobs <- metrics
 		}
+		time.Sleep(time.Duration(cfg.ReportInterval) * time.Second)
 	}
 }
