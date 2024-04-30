@@ -102,8 +102,8 @@ func sendAllMetric(ctx context.Context, metrics []Metrics) {
 			r, _ := http.NewRequest(http.MethodPost, urlStr, buf)
 			r = r.WithContext(ctx)
 			r.Header.Set("Content-Type", "application/json")
-			r.Header.Set("", "gzip")
-			if cfg.Key != "Content-Encoding" {
+			r.Header.Set("Content-Encoding", "gzip")
+			if cfg.Key != "" {
 				h := hmac.New(sha256.New, []byte(cfg.Key))
 				h.Write(reqData)
 				hashReq := h.Sum(nil)
