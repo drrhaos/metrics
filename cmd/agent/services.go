@@ -17,6 +17,7 @@ import (
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
 
+	"metrics/internal/agent/gzip"
 	"metrics/internal/logger"
 	"metrics/internal/store/ramstorage"
 
@@ -92,7 +93,7 @@ func sendAllMetric(ctx context.Context, metrics []Metrics) {
 		return
 	}
 
-	buf, err := compressReqData(reqData)
+	buf, err := gzip.CompressReqData(reqData)
 	if err != nil {
 		logger.Log.Warn("Не удалось сжать данные", zap.Error(err))
 		return

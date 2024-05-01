@@ -1,4 +1,4 @@
-package main
+package configure
 
 import (
 	"flag"
@@ -17,7 +17,7 @@ type Config struct {
 	Key            string `env:"KEY"`
 }
 
-func (cfg *Config) readStartParams() bool {
+func (cfg *Config) ReadConfig() bool {
 	err := env.Parse(cfg)
 	if err != nil {
 		logger.Log.Info("Не удалось найти переменные окружения")

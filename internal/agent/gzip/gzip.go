@@ -1,4 +1,4 @@
-package main
+package gzip
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func compressReqData(reqData []byte) (*bytes.Buffer, error) {
+func CompressReqData(reqData []byte) (*bytes.Buffer, error) {
 	var buf bytes.Buffer
 	zipF := gzip.NewWriter(&buf)
 	_, err := zipF.Write(reqData)

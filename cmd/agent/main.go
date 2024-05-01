@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 
+	"metrics/internal/agent/configure"
 	"metrics/internal/logger"
 )
 
@@ -51,14 +52,14 @@ var nameGauges = []string{
 
 const flagLogLevel = "info"
 
-var cfg Config
+var cfg configure.Config
 
 func main() {
 	if err := logger.Initialize(flagLogLevel); err != nil {
 		panic(err)
 	}
 
-	ok := cfg.readStartParams()
+	ok := cfg.ReadConfig()
 	if !ok {
 		flag.PrintDefaults()
 		os.Exit(0)
