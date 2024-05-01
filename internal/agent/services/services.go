@@ -1,4 +1,4 @@
-package main
+package services
 
 import (
 	"context"
@@ -17,13 +17,57 @@ import (
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
 
+	"metrics/internal/agent/configure"
 	"metrics/internal/agent/gzip"
 	"metrics/internal/logger"
+	"metrics/internal/store"
 	"metrics/internal/store/ramstorage"
 
 	"github.com/avast/retry-go"
 	"go.uber.org/zap"
 )
+
+const typeMetricCounter = "counter"
+const typeMetricGauge = "gauge"
+const randomValueName = "RandomValue"
+const pollCountName = "PollCount"
+const gaugesTotalMem = "TotalMemory"
+const gaugesFreeMem = "FreeMemory"
+const gaugesCPUutil = "CPUutilization1"
+
+const urlUpdateMetricsJSONConst = "http://%s/updates/"
+
+var sleepStep = map[uint]int64{0: 1, 1: 3, 2: 5}
+
+var nameGauges = []string{
+	"Alloc",
+	"BuckHashSys",
+	"Frees",
+	"GCCPUFraction",
+	"GCSys",
+	"HeapAlloc",
+	"HeapIdle",
+	"HeapInuse",
+	"HeapObjects",
+	"HeapReleased",
+	"HeapSys",
+	"LastGC",
+	"Lookups",
+	"MCacheInuse",
+	"MCacheSys",
+	"MSpanInuse",
+	"MSpanSys",
+	"Mallocs",
+	"NextGC",
+	"NumForcedGC",
+	"NumGC",
+	"OtherSys",
+	"PauseTotalNs",
+	"StackInuse",
+	"StackSys",
+	"Sys",
+	"TotalAlloc",
+}
 
 type Metrics struct {
 	ID    string   `json:"id"`              // имя метрики
@@ -55,7 +99,7 @@ func getFloat64MemStats(m runtime.MemStats, name string) (float64, bool) {
 	return floatValue, true
 }
 
-func updateMertics(ctx context.Context, metricsCPU *ramstorage.RAMStorage, PollCount int64) {
+func updateMertics(ctx context.Context, metricsCPU *store.StorageContext, PollCount int64) {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	metricsCPU.UpdateGauge(ctx, randomValueName, rand.Float64())
@@ -69,7 +113,7 @@ func updateMertics(ctx context.Context, metricsCPU *ramstorage.RAMStorage, PollC
 	}
 }
 
-func updateMerticsGops(ctx context.Context, metricsCPU *ramstorage.RAMStorage) {
+func updateMerticsGops(ctx context.Context, metricsCPU *store.StorageContext) {
 	m, _ := mem.VirtualMemory()
 	totalMem := m.Total
 	metricsCPU.UpdateGauge(ctx, gaugesTotalMem, float64(totalMem))
@@ -79,7 +123,7 @@ func updateMerticsGops(ctx context.Context, metricsCPU *ramstorage.RAMStorage) {
 	metricsCPU.UpdateGauge(ctx, gaugesCPUutil, float64(countCPU))
 }
 
-func sendAllMetric(ctx context.Context, metrics []Metrics) {
+func sendAllMetric(ctx context.Context, metrics []Metrics, cfg configure.Config) {
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(time.Second*30))
 	defer cancel()
 
@@ -126,14 +170,14 @@ func sendAllMetric(ctx context.Context, metrics []Metrics) {
 	}
 }
 
-func sendMetricsWorker(ctx context.Context, workerID int, jobs <-chan []Metrics) {
+func sendMetricsWorker(ctx context.Context, workerID int, jobs <-chan []Metrics, cfg configure.Config) {
 	for job := range jobs {
 		logger.Log.Info(fmt.Sprintf("Воркер %d количество метрик %d", workerID, len(job)))
-		sendAllMetric(ctx, job)
+		sendAllMetric(ctx, job, cfg)
 	}
 }
 
-func prepareBatch(ctx context.Context, metricsCPU *ramstorage.RAMStorage) (metricsBatches [][]Metrics) {
+func prepareBatch(ctx context.Context, metricsCPU *store.StorageContext, cfg configure.Config) (metricsBatches [][]Metrics) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
@@ -179,13 +223,11 @@ func prepareBatch(ctx context.Context, metricsCPU *ramstorage.RAMStorage) (metri
 	return metricsBatches
 }
 
-func collectMetrics() {
+func CollectMetrics(cfg configure.Config) {
 	jobs := make(chan []Metrics, cfg.RateLimit)
-	metricsCPU := &ramstorage.RAMStorage{
-		Counter: make(map[string]int64),
-		Gauge:   make(map[string]float64),
-		Mut:     sync.Mutex{},
-	}
+
+	metricsCPU := &store.StorageContext{}
+	metricsCPU.SetStorage(ramstorage.NewStorage())
 
 	ctx := context.Background()
 
@@ -212,12 +254,12 @@ func collectMetrics() {
 
 	for w := 1; w <= cfg.RateLimit; w++ {
 		go func(workerID int) {
-			sendMetricsWorker(ctx, workerID, jobs)
+			sendMetricsWorker(ctx, workerID, jobs, cfg)
 		}(w)
 	}
 
 	for {
-		for _, metrics := range prepareBatch(ctx, metricsCPU) {
+		for _, metrics := range prepareBatch(ctx, metricsCPU, cfg) {
 			jobs <- metrics
 		}
 		time.Sleep(time.Duration(cfg.ReportInterval) * time.Second)
