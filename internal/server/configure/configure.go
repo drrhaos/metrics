@@ -64,7 +64,7 @@ func (cfg *Config) ReadConfig() bool {
 	if errURL != nil {
 		flag.PrintDefaults()
 		return false
-	} else {
-		return true
 	}
+
+	return true
 }
