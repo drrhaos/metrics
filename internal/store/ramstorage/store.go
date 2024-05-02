@@ -161,6 +161,6 @@ func (storage *RAMStorage) GetGauge(ctx context.Context, nameMetric string) (cur
 }
 
 // Ping проверяет доступность хранилища.
-func (storage *RAMStorage) Ping(ctx context.Context) bool {
+func (storage *RAMStorage) Ping(_ context.Context) bool {
 	return false
 }
