@@ -2,11 +2,12 @@ package services
 
 import (
 	"context"
+	"runtime"
+	"testing"
+
 	"metrics/internal/agent/configure"
 	"metrics/internal/store"
 	"metrics/internal/store/ramstorage"
-	"runtime"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -59,7 +60,6 @@ func Test_prepareBatch(t *testing.T) {
 					}
 				}
 			}
-
 		})
 	}
 }

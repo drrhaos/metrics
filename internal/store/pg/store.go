@@ -200,7 +200,6 @@ func (db *Database) GetCounter(ctx context.Context, nameMetric string) (valueMet
 				`SELECT value
 		FROM counters
 		WHERE name = $1`, nameMetric).Scan(&valueMetric)
-
 			if err != nil {
 				return err
 			}

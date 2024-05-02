@@ -22,13 +22,15 @@ import (
 	"go.uber.org/zap"
 )
 
-const urlGetMetricsConst = "/"
-const urlGetPing = "/ping"
-const urlUpdateMetricConst = "/update/{typeMetric}/{nameMetric}/{valueMetric}"
-const urlUpdateMetricJSONConst = "/update/"
-const urlUpdatesMetricJSONConst = "/updates/"
-const urlGetMetricConst = "/value/{typeMetric}/{nameMetric}"
-const urlGetMetricJSONConst = "/value/"
+const (
+	urlGetMetricsConst        = "/"
+	urlGetPing                = "/ping"
+	urlUpdateMetricConst      = "/update/{typeMetric}/{nameMetric}/{valueMetric}"
+	urlUpdateMetricJSONConst  = "/update/"
+	urlUpdatesMetricJSONConst = "/updates/"
+	urlGetMetricConst         = "/value/{typeMetric}/{nameMetric}"
+	urlGetMetricJSONConst     = "/value/"
+)
 
 const flagLogLevel = "info"
 

@@ -23,7 +23,6 @@ type Config struct {
 // ReadStartParams чтение настроек.
 func (cfg *Config) ReadConfig() bool {
 	err := env.Parse(cfg)
-
 	if err != nil {
 		logger.Log.Info("Не удалось найти переменные окружения ")
 	}

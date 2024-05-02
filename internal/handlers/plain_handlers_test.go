@@ -2,24 +2,27 @@ package handlers
 
 import (
 	"context"
-	"metrics/internal/server/configure"
-	"metrics/internal/store"
-	"metrics/internal/store/ramstorage"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"metrics/internal/server/configure"
+	"metrics/internal/store"
+	"metrics/internal/store/ramstorage"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 )
 
-const urlGetMetricsConst = "/"
-const urlGetPing = "/ping"
-const urlUpdateMetricConst = "/update/{typeMetric}/{nameMetric}/{valueMetric}"
-const urlUpdateMetricJSONConst = "/update/"
-const urlUpdatesMetricJSONConst = "/updates/"
-const urlGetMetricConst = "/value/{typeMetric}/{nameMetric}"
-const urlGetMetricJSONConst = "/value/"
+const (
+	urlGetMetricsConst        = "/"
+	urlGetPing                = "/ping"
+	urlUpdateMetricConst      = "/update/{typeMetric}/{nameMetric}/{valueMetric}"
+	urlUpdateMetricJSONConst  = "/update/"
+	urlUpdatesMetricJSONConst = "/updates/"
+	urlGetMetricConst         = "/value/{typeMetric}/{nameMetric}"
+	urlGetMetricJSONConst     = "/value/"
+)
 
 var cfg = configure.Config{}
 
@@ -60,7 +63,6 @@ func Benchmark_TestMetricsHandler_UpdateMetricHandler(b *testing.B) {
 		r.ServeHTTP(w, req)
 
 	}
-
 }
 
 func Benchmark_TestMetricsHandler_GetMetricHandler(b *testing.B) {
@@ -125,7 +127,6 @@ func Benchmark_TestMetricsHandler_GetNameMetricsHandler(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		r.ServeHTTP(w, req)
-
 	}
 }
 
@@ -227,7 +228,6 @@ func TestMetricsHandler_UpdateMetricHandler(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-
 			req := httptest.NewRequest(test.typeReqest, test.url, nil)
 			w := httptest.NewRecorder()
 
@@ -339,7 +339,6 @@ func TestMetricsHandler_GetMetricHandler(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-
 			req := httptest.NewRequest(test.typeReqest, test.url, nil)
 			w := httptest.NewRecorder()
 
@@ -410,7 +409,6 @@ func TestMetricsHandler_GetNameMetricsHandler(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-
 			req := httptest.NewRequest(test.typeReqest, test.url, nil)
 			w := httptest.NewRecorder()
 

@@ -37,7 +37,7 @@ func (storage *RAMStorage) SaveMetrics(filePath string) bool {
 		logger.Log.Warn("не удалось преобразовать структуру")
 		return false
 	}
-	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, 0666)
+	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, 0o666)
 	if err != nil {
 		logger.Log.Warn("не удалось открыть файл")
 		return false
@@ -58,7 +58,7 @@ func (storage *RAMStorage) LoadMetrics(filePath string) bool {
 	}
 	storage.Mut.Lock()
 	defer storage.Mut.Unlock()
-	file, err := os.OpenFile(filePath, os.O_RDONLY|os.O_CREATE, 0666)
+	file, err := os.OpenFile(filePath, os.O_RDONLY|os.O_CREATE, 0o666)
 	if err != nil {
 		logger.Log.Warn("не удалось открыть файл")
 		return false

@@ -167,7 +167,6 @@ func (mh *MetricsHandler) GetNameMetricsHandler(res http.ResponseWriter, req *ht
 
 // GetPing проверяет доступность базы данных.
 func (mh *MetricsHandler) GetPing(res http.ResponseWriter, req *http.Request, storage *store.StorageContext) {
-
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 

@@ -8,13 +8,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"metrics/internal/handlers"
 	"metrics/internal/server/configure"
 	"metrics/internal/store"
 	"metrics/internal/store/ramstorage"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"

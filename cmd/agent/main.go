@@ -11,8 +11,6 @@ import (
 
 const flagLogLevel = "info"
 
-var cfg configure.Config
-
 func main() {
 	if err := logger.Initialize(flagLogLevel); err != nil {
 		panic(err)

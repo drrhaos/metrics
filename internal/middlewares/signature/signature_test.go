@@ -6,13 +6,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"metrics/internal/handlers"
 	"metrics/internal/server/configure"
 	"metrics/internal/store"
 	"metrics/internal/store/ramstorage"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
@@ -86,7 +87,6 @@ func TestCheckSignaturMiddleware(t *testing.T) {
 			assert.Equal(t, test.want.code, w.Code)
 		})
 	}
-
 }
 
 func TestAddSignatureMiddleware(t *testing.T) {

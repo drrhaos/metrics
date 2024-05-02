@@ -139,7 +139,8 @@ func TestRAMStorage_GetCounters(t *testing.T) {
 			},
 			want:  data,
 			want1: true,
-		}}
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, got1 := tt.storage.GetCounters(tt.args.ctx)
@@ -256,7 +257,8 @@ func TestRAMStorage_GetGauge(t *testing.T) {
 				nameMetric: "Test",
 			},
 			wantExists: false,
-		}}
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gotCurrentValue, gotExists := tt.storage.GetGauge(tt.args.ctx, tt.args.nameMetric)
@@ -287,7 +289,8 @@ func TestRAMStorage_Ping(t *testing.T) {
 				ctx: context.Background(),
 			},
 			want: false,
-		}}
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.storage.Ping(tt.args.ctx); got != tt.want {

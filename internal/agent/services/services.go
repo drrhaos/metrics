@@ -27,13 +27,15 @@ import (
 	"go.uber.org/zap"
 )
 
-const typeMetricCounter = "counter"
-const typeMetricGauge = "gauge"
-const randomValueName = "RandomValue"
-const pollCountName = "PollCount"
-const gaugesTotalMem = "TotalMemory"
-const gaugesFreeMem = "FreeMemory"
-const gaugesCPUutil = "CPUutilization1"
+const (
+	typeMetricCounter = "counter"
+	typeMetricGauge   = "gauge"
+	randomValueName   = "RandomValue"
+	pollCountName     = "PollCount"
+	gaugesTotalMem    = "TotalMemory"
+	gaugesFreeMem     = "FreeMemory"
+	gaugesCPUutil     = "CPUutilization1"
+)
 
 const urlUpdateMetricsJSONConst = "http://%s/updates/"
 
@@ -131,7 +133,6 @@ func sendAllMetric(ctx context.Context, metrics []Metrics, cfg configure.Config)
 
 	urlStr := fmt.Sprintf(urlUpdateMetricsJSONConst, cfg.Address)
 	reqData, err := json.Marshal(metrics)
-
 	if err != nil {
 		logger.Log.Warn("Не удалось создать JSON", zap.Error(err))
 		return

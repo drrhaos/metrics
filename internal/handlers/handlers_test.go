@@ -5,25 +5,28 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+
 	"metrics/internal/handlers"
 	"metrics/internal/server/configure"
 	"metrics/internal/store"
 	"metrics/internal/store/mocks"
 	"metrics/internal/store/ramstorage"
-	"net/http"
-	"net/http/httptest"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/mock"
 )
 
-const urlGetMetricsConst = "/"
-const urlGetPing = "/ping"
-const urlUpdateMetricConst = "/update/{typeMetric}/{nameMetric}/{valueMetric}"
-const urlUpdateMetricJSONConst = "/update/"
-const urlUpdatesMetricJSONConst = "/updates/"
-const urlGetMetricConst = "/value/{typeMetric}/{nameMetric}"
-const urlGetMetricJSONConst = "/value/"
+const (
+	urlGetMetricsConst        = "/"
+	urlGetPing                = "/ping"
+	urlUpdateMetricConst      = "/update/{typeMetric}/{nameMetric}/{valueMetric}"
+	urlUpdateMetricJSONConst  = "/update/"
+	urlUpdatesMetricJSONConst = "/updates/"
+	urlGetMetricConst         = "/value/{typeMetric}/{nameMetric}"
+	urlGetMetricJSONConst     = "/value/"
+)
 
 var cfg = configure.Config{}
 
@@ -181,7 +184,6 @@ func ExampleMetricsHandler_GetNameMetricsHandler() {
 }
 
 func ExampleMetricsHandler_GetPing() {
-
 	stMetrics := &store.StorageContext{}
 	stMetrics.SetStorage(ramstorage.NewStorage())
 	stMetrics.UpdateCounter(context.Background(), "PoolCounter", 11)
@@ -227,7 +229,6 @@ func ExampleMetricsHandler_GetPing() {
 }
 
 func ExampleMetricsHandler_UpdateMetricJSONHandler() {
-
 	deltaCur := int64(11)
 	metricCounter := handlers.Metrics{
 		ID:    "PoolCounter",
@@ -297,7 +298,6 @@ func ExampleMetricsHandler_UpdateMetricJSONHandler() {
 }
 
 func ExampleMetricsHandler_UpdatesMetricJSONHandler() {
-
 	var metrics []handlers.Metrics
 	deltaCur := int64(111)
 	metric := handlers.Metrics{
@@ -395,7 +395,8 @@ func ExampleMetricsHandler_GetMetricJSONHandler() {
 
 	dataMetric := handlers.Metrics{
 		ID:    "PoolCounter",
-		MType: "counter"}
+		MType: "counter",
+	}
 	bodyMetr, _ := json.Marshal(dataMetric)
 	req := httptest.NewRequest(http.MethodPost, urlGetMetricJSONConst, bytes.NewReader(bodyMetr))
 	w := httptest.NewRecorder()

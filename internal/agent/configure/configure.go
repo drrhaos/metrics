@@ -29,6 +29,7 @@ func (cfg *Config) ReadConfig() bool {
 	rateLimit := flag.Int("l", 1, "number of simultaneous outgoing requests to the server")
 	key := flag.String("k", "", "sha256 key for encryption of transmitted data")
 	flag.Parse()
+
 	if cfg.Address == "" {
 		cfg.Address = *address
 	}
