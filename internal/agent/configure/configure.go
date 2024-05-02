@@ -54,7 +54,6 @@ func (cfg *Config) ReadConfig() bool {
 	if cfg.PollInterval <= 0 || cfg.ReportInterval <= 0 || errURL != nil {
 		flag.PrintDefaults()
 		return false
-	} else {
-		return true
 	}
+	return true
 }
