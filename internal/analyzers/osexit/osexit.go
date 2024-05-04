@@ -1,3 +1,5 @@
+// Модуль osexit. Это линтер для языка программирования Go.
+// Используя статический анализ, он находит использование прямого вызова os.Exit в функции main пакета main.
 package osexit
 
 import (
@@ -8,10 +10,11 @@ import (
 
 var Analyzer = &analysis.Analyzer{
 	Name: "osexit",
-	Doc:  `Проверяет использование прямого вызова os.Exit в функции main пакета main`,
+	Doc:  `Проверяет использование прямого вызова os.Exit в функции main пакета main.`,
 	Run:  run,
 }
 
+// run функция запускает анализ исходного кода
 func run(pass *analysis.Pass) (interface{}, error) {
 	expr := func(x *ast.FuncDecl) {
 		for _, ttt := range x.Body.List {
