@@ -5,7 +5,6 @@ package signature
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -51,15 +50,15 @@ func TestCheckSignaturMiddleware(t *testing.T) {
 		want want
 	}{
 		{
-			name: "rest positive test update metrics #1",
-			hash: "MWWZx-8HPTidG99XrdIPVICaB1okBYCEaUZ2lxrcVdI=",
+			name: "positive positive chech signature #1",
+			hash: "6To-K1OUlTTQk_Kf529ZSM2VuSMzJ37ELfmhdtmque4=",
 			data: bodyMetr,
 			want: want{
 				code: 200,
 			},
 		},
 		{
-			name: "rest negative test update metrics #2",
+			name: "negative chech signature #2",
 			hash: "ZchLggTYnSeSsLHDE_3aI19eZEf2KL-06jh1mbG9hIY=",
 			data: bodyMetr,
 			want: want{
@@ -67,7 +66,7 @@ func TestCheckSignaturMiddleware(t *testing.T) {
 			},
 		},
 		{
-			name: "rest negative test update metrics #3",
+			name: "negative chech signature #3",
 			hash: "ZchLggTYnSeSsLHDE_3aI19eZEf2KL-06jh1mbGhIY=",
 			data: bodyMetr,
 			want: want{
@@ -118,7 +117,7 @@ func TestAddSignatureMiddleware(t *testing.T) {
 		data []byte
 	}{
 		{
-			name: "rest positive test update metrics #1",
+			name: "positive test add signature #1",
 			data: bodyMetr,
 			want: want{
 				hash: "9Win5C3nSnfe85m8mati4_VeNk4D1OCjwUxea7nLG6Q=",
@@ -131,7 +130,6 @@ func TestAddSignatureMiddleware(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			r.ServeHTTP(w, req)
-			fmt.Println()
 			assert.Equal(t, test.want.hash, w.Header().Get("HashSHA256"))
 		})
 	}
