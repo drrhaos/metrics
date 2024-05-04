@@ -72,10 +72,10 @@ var nameGauges = []string{
 }
 
 type Metrics struct {
-	ID    string   `json:"id"`              // имя метрики
-	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
 	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+	ID    string   `json:"id"`              // имя метрики
+	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
 }
 
 func customDelay() retry.DelayTypeFunc {
@@ -155,10 +155,10 @@ func sendAllMetric(ctx context.Context, metrics []Metrics, cfg configure.Config)
 				hashReq := h.Sum(nil)
 				r.Header.Set("HashSHA256", base64.URLEncoding.EncodeToString(hashReq))
 			}
-			resp, err := client.Do(r)
-			if err != nil {
-				logger.Log.Warn("Не удалось отправить запрос", zap.Error(err))
-				return err
+			resp, errCLient := client.Do(r)
+			if errCLient != nil {
+				logger.Log.Warn("Не удалось отправить запрос", zap.Error(errCLient))
+				return errCLient
 			}
 			defer resp.Body.Close()
 			return nil

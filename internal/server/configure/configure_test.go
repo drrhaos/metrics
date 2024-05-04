@@ -17,8 +17,8 @@ func TestConfig_ReadConfig(t *testing.T) {
 	t.Setenv("KEY", "test")
 
 	type want struct {
-		ok  bool
 		cfg Config
+		ok  bool
 	}
 	tests := []struct {
 		name      string

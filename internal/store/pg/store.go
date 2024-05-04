@@ -84,7 +84,7 @@ func (db *Database) Migrations(ctx context.Context) error {
 		return err
 	}
 	if !exist {
-		_, err := db.Conn.Exec(ctx,
+		_, err = db.Conn.Exec(ctx,
 			`CREATE TABLE counters (
 				"id" SERIAL PRIMARY KEY,
 				"name" character(40) NOT NULL UNIQUE,

@@ -13,11 +13,11 @@ import (
 // Config хранит текущую конфигурацию сервиса.
 type Config struct {
 	Address         string `env:"ADDRESS"`                        // адрес сервера
-	StoreInterval   int64  `env:"STORE_INTERVAL" envDefault:"-1"` // интервал сохранения данных
-	FileStoragePath string `env:"FILE_STORAGE_PATH"`              // путь до хранилища данных
-	Restore         bool   `env:"RESTORE" envDefault:"true"`      // флаг указывающий на необходимость восстановления из хранилища при старте
 	DatabaseDsn     string `env:"DATABASE_DSN"`                   // DSN базы данных
+	FileStoragePath string `env:"FILE_STORAGE_PATH"`              // путь до хранилища данных
 	Key             string `env:"KEY"`                            // ключ для проверки целостности данных в запросе
+	Restore         bool   `env:"RESTORE" envDefault:"true"`      // флаг указывающий на необходимость восстановления из хранилища при старте
+	StoreInterval   int64  `env:"STORE_INTERVAL" envDefault:"-1"` // интервал сохранения данных
 }
 
 // ReadStartParams чтение настроек.

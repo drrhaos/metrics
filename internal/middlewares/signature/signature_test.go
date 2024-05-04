@@ -114,8 +114,8 @@ func TestAddSignatureMiddleware(t *testing.T) {
 	}
 	tests := []struct {
 		name string
-		data []byte
 		want want
+		data []byte
 	}{
 		{
 			name: "rest positive test update metrics #1",

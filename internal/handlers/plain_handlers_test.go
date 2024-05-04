@@ -267,8 +267,8 @@ func TestMetricsHandler_GetMetricHandler(t *testing.T) {
 	})
 
 	type want struct {
-		code  int
 		value string
+		code  int
 	}
 	tests := []struct {
 		name       string

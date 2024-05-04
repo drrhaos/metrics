@@ -31,8 +31,8 @@ func Test_prepareBatch(t *testing.T) {
 	stMetrics3.SetStorage(ramstorage.NewStorage())
 
 	tests := []struct {
-		name string
 		metr *store.StorageContext
+		name string
 	}{
 		{
 			name: "positive test #1",
@@ -113,8 +113,8 @@ func Test_getFloat64MemStats(t *testing.T) {
 	m.Alloc = 1000
 	m.GCCPUFraction = 100.1
 	type args struct {
-		m    runtime.MemStats
 		name string
+		m    runtime.MemStats
 	}
 	tests := []struct {
 		name  string

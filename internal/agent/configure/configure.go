@@ -11,10 +11,10 @@ import (
 
 type Config struct {
 	Address        string `env:"ADDRESS"`
-	ReportInterval int64  `env:"REPORT_INTERVAL"`
+	Key            string `env:"KEY"`
 	PollInterval   int64  `env:"POLL_INTERVAL"`
 	RateLimit      int    `env:"RATE_LIMIT"`
-	Key            string `env:"KEY"`
+	ReportInterval int64  `env:"REPORT_INTERVAL"`
 }
 
 func (cfg *Config) ReadConfig() bool {

@@ -52,8 +52,8 @@ func TestGzipDecompressMiddleware(t *testing.T) {
 		code int
 	}
 	tests := []struct {
-		name string
 		data io.Reader
+		name string
 		want want
 	}{
 		{

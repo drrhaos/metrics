@@ -83,10 +83,10 @@ func TestRAMStorage_GetGauges(t *testing.T) {
 		ctx context.Context
 	}
 	tests := []struct {
-		name    string
 		storage *RAMStorage
-		args    args
 		want    map[string]float64
+		args    args
+		name    string
 		want1   bool
 	}{
 		{
@@ -125,10 +125,10 @@ func TestRAMStorage_GetCounters(t *testing.T) {
 		ctx context.Context
 	}
 	tests := []struct {
-		name    string
 		storage *RAMStorage
-		args    args
 		want    map[string]int64
+		args    args
+		name    string
 		want1   bool
 	}{
 		{
@@ -277,9 +277,9 @@ func TestRAMStorage_Ping(t *testing.T) {
 		ctx context.Context
 	}
 	tests := []struct {
-		name    string
 		storage *RAMStorage
 		args    args
+		name    string
 		want    bool
 	}{
 		{
