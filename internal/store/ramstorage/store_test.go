@@ -2,6 +2,7 @@ package ramstorage
 
 import (
 	"context"
+	"os"
 	"reflect"
 	"testing"
 )
@@ -171,7 +172,7 @@ func TestRAMStorage_GetCounter(t *testing.T) {
 		wantExists       bool
 	}{
 		{
-			name:    "Positive test get counter #1",
+			name:    "positive test get counter #1",
 			storage: st,
 			args: args{
 				ctx:        context.Background(),
@@ -181,7 +182,7 @@ func TestRAMStorage_GetCounter(t *testing.T) {
 			wantExists:       true,
 		},
 		{
-			name:    "Positive test get counter #2",
+			name:    "positive test get counter #2",
 			storage: st,
 			args: args{
 				ctx:        context.Background(),
@@ -191,8 +192,17 @@ func TestRAMStorage_GetCounter(t *testing.T) {
 			wantExists:       true,
 		},
 		{
-			name:    "Negative test get counter #3",
+			name:    "negative test get counter #3",
 			storage: st,
+			args: args{
+				ctx:        context.Background(),
+				nameMetric: "Test",
+			},
+			wantExists: false,
+		},
+		{
+			name:    "negative test get counter #4",
+			storage: nil,
 			args: args{
 				ctx:        context.Background(),
 				nameMetric: "Test",
@@ -230,7 +240,7 @@ func TestRAMStorage_GetGauge(t *testing.T) {
 		wantExists       bool
 	}{
 		{
-			name:    "Positive test get gauge #1",
+			name:    "positive test get gauge #1",
 			storage: st,
 			args: args{
 				ctx:        context.Background(),
@@ -240,7 +250,7 @@ func TestRAMStorage_GetGauge(t *testing.T) {
 			wantExists:       true,
 		},
 		{
-			name:    "Positive test get gauge #2",
+			name:    "positive test get gauge #2",
 			storage: st,
 			args: args{
 				ctx:        context.Background(),
@@ -250,8 +260,17 @@ func TestRAMStorage_GetGauge(t *testing.T) {
 			wantExists:       true,
 		},
 		{
-			name:    "Negative test get gauge #3",
+			name:    "negative test get gauge #3",
 			storage: st,
+			args: args{
+				ctx:        context.Background(),
+				nameMetric: "Test",
+			},
+			wantExists: false,
+		},
+		{
+			name:    "negative test get gauge #4",
+			storage: nil,
 			args: args{
 				ctx:        context.Background(),
 				nameMetric: "Test",
@@ -295,6 +314,105 @@ func TestRAMStorage_Ping(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.storage.Ping(tt.args.ctx); got != tt.want {
 				t.Errorf("RAMStorage.Ping() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRAMStorage_SaveMetrics(t *testing.T) {
+	fileTmp := "/tmp/tmp.json"
+	fileTmpBad := "/teeeeemp/tmp.json"
+	defer os.Remove(fileTmp)
+	defer os.Remove(fileTmpBad)
+
+	type fields struct {
+		Gauge   map[string]float64
+		Counter map[string]int64
+	}
+	type args struct {
+		filePath string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name: "positive test #1",
+			fields: fields{
+				Gauge:   map[string]float64{"first": 34.1},
+				Counter: map[string]int64{"first": 34},
+			},
+			args: args{
+				filePath: fileTmp,
+			},
+			want: true,
+		},
+		{
+			name: "negative test #2",
+			fields: fields{
+				Gauge:   map[string]float64{"first": 34.1},
+				Counter: map[string]int64{"first": 34},
+			},
+			args: args{
+				filePath: fileTmpBad,
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			storage := &RAMStorage{
+				Gauge:   tt.fields.Gauge,
+				Counter: tt.fields.Counter,
+			}
+			if got := storage.SaveMetrics(tt.args.filePath); got != tt.want {
+				t.Errorf("RAMStorage.SaveMetrics() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRAMStorage_LoadMetrics(t *testing.T) {
+	fileTmp := "/tmp/tmp.json"
+	fileTmpBad := "/teeeeemp/tmp.json"
+	defer os.Remove(fileTmp)
+	defer os.Remove(fileTmpBad)
+
+	storage := &RAMStorage{
+		Gauge:   map[string]float64{"first": 34.1},
+		Counter: map[string]int64{"first": 34},
+	}
+	storage.SaveMetrics(fileTmp)
+
+	type args struct {
+		filePath string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "positive test #1",
+			args: args{
+				filePath: fileTmp,
+			},
+			want: true,
+		},
+		{
+			name: "negative test #1",
+			args: args{
+				filePath: fileTmpBad,
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := storage.LoadMetrics(tt.args.filePath); got != tt.want {
+				t.Errorf("RAMStorage.LoadMetrics() = %v, want %v", got, tt.want)
 			}
 		})
 	}

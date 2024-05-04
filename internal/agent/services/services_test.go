@@ -2,12 +2,11 @@ package services
 
 import (
 	"context"
-	"runtime"
-	"testing"
-
 	"metrics/internal/agent/configure"
 	"metrics/internal/store"
 	"metrics/internal/store/ramstorage"
+	"runtime"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -159,6 +158,33 @@ func Test_getFloat64MemStats(t *testing.T) {
 			if got1 != tt.want1 {
 				t.Errorf("getFloat64MemStats() got1 = %v, want %v", got1, tt.want1)
 			}
+		})
+	}
+}
+
+func Test_updateMerticsGops(t *testing.T) {
+	stMetrics := &store.StorageContext{}
+	stMetrics.SetStorage(ramstorage.NewStorage())
+
+	type args struct {
+		ctx        context.Context
+		metricsCPU *store.StorageContext
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "positive test #1",
+			args: args{
+				ctx:        context.Background(),
+				metricsCPU: stMetrics,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			updateMerticsGops(tt.args.ctx, tt.args.metricsCPU)
 		})
 	}
 }
