@@ -13,7 +13,6 @@ import (
 )
 
 func TestRequestLogger(t *testing.T) {
-
 	r := chi.NewRouter()
 	r.Use(RequestLogger)
 	r.Post("/update", func(w http.ResponseWriter, r *http.Request) {

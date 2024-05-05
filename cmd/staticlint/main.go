@@ -10,8 +10,9 @@
 package main
 
 import (
-	"metrics/internal/analyzers/osexit"
 	"strings"
+
+	"metrics/internal/analyzers/osexit"
 
 	"github.com/mdempsky/maligned/passes/maligned"
 	"github.com/timakin/bodyclose/passes/bodyclose"

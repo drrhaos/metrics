@@ -2,16 +2,24 @@ package services
 
 import (
 	"context"
-	"metrics/internal/agent/configure"
-	"metrics/internal/store"
-	"metrics/internal/store/ramstorage"
+	"net/http"
 	"runtime"
 	"testing"
 
+	"metrics/internal/agent/configure"
+	"metrics/internal/handlers"
+	confSer "metrics/internal/server/configure"
+	"metrics/internal/store"
+	"metrics/internal/store/ramstorage"
+
+	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 )
 
-var cfg = configure.Config{}
+var (
+	cfg          = configure.Config{}
+	configServer = confSer.Config{}
+)
 
 func Test_prepareBatch(t *testing.T) {
 	cfg.ReadConfig()
@@ -185,6 +193,53 @@ func Test_updateMerticsGops(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			updateMerticsGops(tt.args.ctx, tt.args.metricsCPU)
+		})
+	}
+}
+
+func Test_sendAllMetric(t *testing.T) {
+	stMetrics := &store.StorageContext{}
+	stMetrics.SetStorage(ramstorage.NewStorage())
+
+	metricHandler := handlers.NewMetricHandler(&configServer)
+
+	r := chi.NewRouter()
+
+	r.Post("/updates", func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
+	})
+	// r.ServeHTTP()
+
+	delt := int64(11)
+	metr := Metrics{
+		ID:    "PoolCounter",
+		MType: "counter",
+		Delta: &delt,
+	}
+	var slMet []Metrics
+	slMet = append(slMet, metr)
+
+	type args struct {
+		ctx     context.Context
+		metrics []Metrics
+		cfg     configure.Config
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "positive test #1",
+			args: args{
+				ctx:     context.Background(),
+				metrics: slMet,
+				cfg:     cfg,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sendAllMetric(tt.args.ctx, tt.args.metrics, tt.args.cfg)
 		})
 	}
 }
