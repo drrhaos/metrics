@@ -125,7 +125,7 @@ func updateMerticsGops(ctx context.Context, metricsCPU *store.StorageContext) {
 	metricsCPU.UpdateGauge(ctx, gaugesCPUutil, float64(countCPU))
 }
 
-func sendAllMetric(ctx context.Context, metrics []Metrics, cfg configure.Config) {
+func sendAllMetric(ctx context.Context, metrics []Metrics, cfg configure.Config) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(time.Second*30))
 	defer cancel()
 
@@ -135,13 +135,13 @@ func sendAllMetric(ctx context.Context, metrics []Metrics, cfg configure.Config)
 	reqData, err := json.Marshal(metrics)
 	if err != nil {
 		logger.Log.Warn("Не удалось создать JSON", zap.Error(err))
-		return
+		return err
 	}
 
 	buf, err := gzip.CompressReqData(reqData)
 	if err != nil {
 		logger.Log.Warn("Не удалось сжать данные", zap.Error(err))
-		return
+		return err
 	}
 	err = retry.Do(
 		func() error {
@@ -168,7 +168,9 @@ func sendAllMetric(ctx context.Context, metrics []Metrics, cfg configure.Config)
 	)
 	if err != nil {
 		logger.Log.Warn("Не удалось отправить данные", zap.Error(err))
+		return err
 	}
+	return nil
 }
 
 func sendMetricsWorker(ctx context.Context, workerID int, jobs <-chan []Metrics, cfg configure.Config) {

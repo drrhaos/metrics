@@ -2,15 +2,17 @@ package services
 
 import (
 	"context"
-	"net/http"
-	"runtime"
-	"testing"
-
 	"metrics/internal/agent/configure"
 	"metrics/internal/handlers"
+	"metrics/internal/middlewares/signature"
 	confSer "metrics/internal/server/configure"
 	"metrics/internal/store"
 	"metrics/internal/store/ramstorage"
+	"net/http"
+	"net/http/httptest"
+	"runtime"
+	"strings"
+	"testing"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
@@ -202,13 +204,15 @@ func Test_sendAllMetric(t *testing.T) {
 	stMetrics.SetStorage(ramstorage.NewStorage())
 
 	metricHandler := handlers.NewMetricHandler(&configServer)
-
+	key := "test"
 	r := chi.NewRouter()
-
-	r.Post("/updates", func(w http.ResponseWriter, r *http.Request) {
+	r.Use(signature.AddSignatureMiddleware(key))
+	r.Post("/updates/", func(w http.ResponseWriter, r *http.Request) {
 		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
 	})
-	// r.ServeHTTP()
+
+	server := httptest.NewServer(r)
+	defer server.Close()
 
 	delt := int64(11)
 	metr := Metrics{
@@ -224,22 +228,86 @@ func Test_sendAllMetric(t *testing.T) {
 		metrics []Metrics
 		cfg     configure.Config
 	}
+	type want struct {
+		isError bool
+		message string
+	}
 	tests := []struct {
 		name string
 		args args
+		want want
 	}{
 		{
 			name: "positive test #1",
 			args: args{
 				ctx:     context.Background(),
 				metrics: slMet,
-				cfg:     cfg,
+				cfg: configure.Config{
+					Address: strings.Replace(server.URL, "http://", "", 7),
+					Key:     key,
+				},
+			},
+			want: want{
+				isError: false,
+			},
+		},
+		{
+			name: "negative test #2",
+			args: args{
+				ctx:     context.Background(),
+				metrics: slMet,
+				cfg:     configure.Config{Address: "127.0.0.1:8080"},
+			},
+			want: want{
+				isError: true,
+				message: "connect: connection refused",
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sendAllMetric(tt.args.ctx, tt.args.metrics, tt.args.cfg)
+			err := sendAllMetric(tt.args.ctx, tt.args.metrics, tt.args.cfg)
+			if tt.want.isError {
+				assert.ErrorContains(t, err, tt.want.message)
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }
+
+// func TestCollectMetrics(t *testing.T) {
+// 	stMetrics := &store.StorageContext{}
+// 	stMetrics.SetStorage(ramstorage.NewStorage())
+
+// 	metricHandler := handlers.NewMetricHandler(&configServer)
+// 	r := chi.NewRouter()
+// 	r.Post("/updates/", func(w http.ResponseWriter, r *http.Request) {
+// 		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
+// 	})
+
+// 	server := httptest.NewServer(r)
+// 	defer server.Close()
+
+// 	type args struct {
+// 		cfg configure.Config
+// 	}
+// 	tests := []struct {
+// 		name string
+// 		args args
+// 	}{
+// 		{
+// 			name: "positive test #1",
+// 			args: args{
+// 				cfg: configure.Config{
+// 					Address: strings.Replace(server.URL, "http://", "", 7),
+// 				},
+// 			},
+// 		},
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			CollectMetrics(tt.args.cfg)
+// 		})
+// 	}
+// }
