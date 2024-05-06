@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	"metrics/internal/agent/configure"
@@ -11,7 +12,17 @@ import (
 
 const flagLogLevel = "info"
 
+var (
+	buildVersion = "N/A"
+	buildDate    = "N/A"
+	buildCommit  = "N/A"
+)
+
 func main() {
+	fmt.Println("Build version:", buildVersion)
+	fmt.Println("Build date:", buildDate)
+	fmt.Println("Build commit:", buildCommit)
+
 	if err := logger.Initialize(flagLogLevel); err != nil {
 		panic(err)
 	}

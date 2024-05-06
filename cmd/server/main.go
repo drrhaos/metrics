@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -30,11 +31,20 @@ const (
 	urlUpdatesMetricJSONConst = "/updates/"
 	urlGetMetricConst         = "/value/{typeMetric}/{nameMetric}"
 	urlGetMetricJSONConst     = "/value/"
+	flagLogLevel              = "info"
 )
 
-const flagLogLevel = "info"
+var (
+	buildVersion = "N/A"
+	buildDate    = "N/A"
+	buildCommit  = "N/A"
+)
 
 func main() {
+	fmt.Println("Build version:", buildVersion)
+	fmt.Println("Build date:", buildDate)
+	fmt.Println("Build commit:", buildCommit)
+
 	var cfg configure.Config
 	ok := cfg.ReadConfig()
 
