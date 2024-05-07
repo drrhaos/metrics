@@ -8,14 +8,21 @@ import (
 	"strconv"
 	"time"
 
-	_ "embed"
 	"metrics/internal/store"
 
 	"github.com/go-chi/chi"
 )
 
-//go:embed web/index.html
-var form string
+const form = `<html>
+    <head>
+    <title></title>
+    </head>
+    <body>
+	<ul>
+	%s
+	</ul>
+    </body>
+</html>`
 
 const (
 	typeMetricCounter = "counter"
