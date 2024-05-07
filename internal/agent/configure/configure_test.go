@@ -3,39 +3,35 @@
 package configure
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestConfig_ReadConfig(t *testing.T) {
-	t.Setenv("ADDRESS", "127.0.0.1:9090")
-	t.Setenv("REPORT_INTERVAL", "11")
-	t.Setenv("POLL_INTERVAL", "5")
-	t.Setenv("RATE_LIMIT", "2")
-	t.Setenv("KEY", "test")
+	os.Args = append(os.Args, "--a=127.0.0.1:9080")
+	os.Args = append(os.Args, "--p=33")
 
 	type want struct {
 		cfg Config
 		ok  bool
 	}
 	tests := []struct {
-		name      string
-		cfg       Config
-		envKey    string
-		fieldName string
-		envVal    string
-		want      want
+		name  string
+		isEnv bool
+		want  want
 	}{
 		{
-			name: "positive test",
+			name:  "positive test #1",
+			isEnv: false,
 			want: want{
 				ok: true,
 				cfg: Config{
-					Address:        "127.0.0.1:9090",
-					ReportInterval: 11,
-					PollInterval:   5,
-					RateLimit:      2,
+					Address:        "127.0.0.1:9080",
+					ReportInterval: 10,
+					PollInterval:   33,
+					RateLimit:      1,
 					Key:            "test",
 				},
 			},
@@ -44,8 +40,11 @@ func TestConfig_ReadConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ok := tt.cfg.ReadConfig()
+			var cfg Config
+			ok := cfg.ReadConfig()
 			assert.Equal(t, tt.want.ok, ok)
+			assert.Equal(t, tt.want.cfg.Address, cfg.Address)
+			assert.Equal(t, tt.want.cfg.PollInterval, cfg.PollInterval)
 		})
 	}
 }
