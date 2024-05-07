@@ -3,18 +3,14 @@
 package configure
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestConfig_ReadConfig(t *testing.T) {
-	t.Setenv("ADDRESS", "127.0.0.1:9090")
-	t.Setenv("STORE_INTERVAL", "11")
-	t.Setenv("FILE_STORAGE_PATH", "/home/user/")
-	t.Setenv("RESTORE", "true")
-	t.Setenv("DATABASE_DSN", "postgres://test:test@test:4321/test?sslmode=disable")
-	t.Setenv("KEY", "test")
+	os.Args = append(os.Args, "--a=127.0.0.1:9080")
 
 	type want struct {
 		cfg Config
@@ -33,12 +29,12 @@ func TestConfig_ReadConfig(t *testing.T) {
 			want: want{
 				ok: true,
 				cfg: Config{
-					Address:         "127.0.0.1:9090",
-					StoreInterval:   11,
-					FileStoragePath: "/home/user/",
+					Address:         "127.0.0.1:9080",
+					StoreInterval:   300,
+					FileStoragePath: "/tmp/metrics-db.json",
 					Restore:         true,
-					DatabaseDsn:     "postgres://test:test@test:4321/test?sslmode=disable",
-					Key:             "test",
+					DatabaseDsn:     "",
+					Key:             "",
 				},
 			},
 		},
