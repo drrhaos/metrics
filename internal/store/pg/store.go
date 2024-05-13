@@ -46,20 +46,12 @@ func NewDatabase(uri string) *Database {
 
 // SaveMetrics заглушка.
 func (db *Database) SaveMetrics(filePath string) bool {
-	if db != nil {
-		return true
-	} else {
-		return false
-	}
+	return db != nil
 }
 
 // LoadMetrics заглушка.
 func (db *Database) LoadMetrics(filePath string) bool {
-	if db != nil {
-		return true
-	} else {
-		return false
-	}
+	return db != nil
 }
 
 // Close закрывает соединение с базой данных.
