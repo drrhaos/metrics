@@ -126,7 +126,7 @@ func updateMerticsGops(ctx context.Context, metricsCPU *store.StorageContext) {
 }
 
 func sendAllMetric(ctx context.Context, metrics []Metrics, cfg configure.Config) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(time.Second*30))
+	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
 	defer cancel()
 
 	client := &http.Client{}
