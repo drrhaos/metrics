@@ -79,7 +79,7 @@ type Metrics struct {
 }
 
 func customDelay() retry.DelayTypeFunc {
-	return func(n uint, err error, config *retry.Config) time.Duration {
+	return func(n uint, _ error, config *retry.Config) time.Duration {
 		return time.Duration(sleepStep[n])
 	}
 }
