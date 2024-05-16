@@ -18,6 +18,7 @@ type Config struct {
 	Key             string `env:"KEY"`                            // ключ для проверки целостности данных в запросе
 	Restore         bool   `env:"RESTORE" envDefault:"true"`      // флаг указывающий на необходимость восстановления из хранилища при старте
 	StoreInterval   int64  `env:"STORE_INTERVAL" envDefault:"-1"` // интервал сохранения данных
+	CryptoKeyPath   string `env:"CRYPTO_KEY"`                     // передайте путь до файла с приватным ключом
 }
 
 // ReadStartParams чтение настроек.
@@ -33,15 +34,20 @@ func (cfg *Config) ReadConfig() bool {
 	restore := flag.Bool("r", true, "Загружать последние сохранения показаний")
 	databaseDsn := flag.String("d", "",
 		"Сетевой адрес базя данных postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable")
-	key := flag.String("k", "", "sha256 key for encryption of transmitted data")
-
+	key := flag.String("k", "", "ключ для проверки целостности данных в запросе")
+	cryptoKeyPath := flag.String("crypto-key", "", "Путь до файла с приватным ключом")
 	flag.Parse()
+
 	if cfg.Address == "" {
 		cfg.Address = *address
 	}
 
 	if cfg.StoreInterval == -1 {
 		cfg.StoreInterval = *storeInterval
+	}
+
+	if cfg.CryptoKeyPath == "" {
+		cfg.CryptoKeyPath = *cryptoKeyPath
 	}
 
 	if cfg.FileStoragePath == "" {

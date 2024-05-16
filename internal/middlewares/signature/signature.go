@@ -71,6 +71,7 @@ func CheckSignaturMiddleware(key string) func(http.Handler) http.Handler {
 				res.WriteHeader(http.StatusBadRequest)
 				return
 			}
+
 			h := hmac.New(sha256.New, []byte(key))
 			h.Write(body)
 			hashReqCalc := h.Sum(nil)

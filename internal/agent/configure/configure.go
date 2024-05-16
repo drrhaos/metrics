@@ -10,11 +10,12 @@ import (
 )
 
 type Config struct {
-	Address        string `env:"ADDRESS"`
-	Key            string `env:"KEY"`
-	PollInterval   int64  `env:"POLL_INTERVAL"`
-	RateLimit      int    `env:"RATE_LIMIT"`
-	ReportInterval int64  `env:"REPORT_INTERVAL"`
+	Address        string `env:"ADDRESS"`         // адрес эндпоинта HTTP-сервера
+	Key            string `env:"KEY"`             // ключ для проверки целостности данных в запросе
+	PollInterval   int64  `env:"POLL_INTERVAL"`   // частота опроса метрик из пакета runtime
+	RateLimit      int    `env:"RATE_LIMIT"`      // количество одновременно исходящих запросов на сервер ограничение «сверху»
+	ReportInterval int64  `env:"REPORT_INTERVAL"` // частота отправки метрик на сервер
+	CryptoKeyPath  string `env:"CRYPTO_KEY"`      // путь до файла с публичным ключом
 }
 
 func (cfg *Config) ReadConfig() bool {
@@ -23,11 +24,12 @@ func (cfg *Config) ReadConfig() bool {
 		logger.Log.Info("Не удалось найти переменные окружения")
 	}
 
-	address := flag.String("a", "127.0.0.1:8080", "Net address endpoint host:port")
-	reportInterval := flag.Int64("r", 10, "Report interval integer sec > 0")
-	pollInterval := flag.Int64("p", 2, "Pool interval integer sec > 0")
-	rateLimit := flag.Int("l", 1, "number of simultaneous outgoing requests to the server")
-	key := flag.String("k", "", "sha256 key for encryption of transmitted data")
+	address := flag.String("a", "127.0.0.1:8080", "Адрес эндпоинта HTTP-сервера host:port")
+	reportInterval := flag.Int64("r", 10, "Частота отправки метрик на сервер")
+	pollInterval := flag.Int64("p", 2, "Частота опроса метрик из пакета runtime")
+	rateLimit := flag.Int("l", 1, "Количество одновременно исходящих запросов на сервер ограничение «сверху»")
+	key := flag.String("k", "", "Ключ для проверки целостности данных в запросе")
+	cryptoKeyPath := flag.String("crypto-key", "", "Путь до файла с публичным ключом")
 	flag.Parse()
 
 	if cfg.Address == "" {
@@ -49,6 +51,11 @@ func (cfg *Config) ReadConfig() bool {
 	if cfg.Key == "" {
 		cfg.Key = *key
 	}
+
+	if cfg.CryptoKeyPath == "" {
+		cfg.CryptoKeyPath = *cryptoKeyPath
+	}
+
 	_, errURL := url.ParseRequestURI("http://" + cfg.Address)
 
 	if cfg.PollInterval <= 0 || cfg.ReportInterval <= 0 || errURL != nil {

@@ -4,11 +4,14 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"math/rand"
 	"net/http"
+	"os"
 	"reflect"
 	"runtime"
 	"sync"
@@ -20,6 +23,7 @@ import (
 	"metrics/internal/agent/configure"
 	"metrics/internal/agent/gzip"
 	"metrics/internal/logger"
+	"metrics/internal/middlewares/cryptodata"
 	"metrics/internal/store"
 	"metrics/internal/store/ramstorage"
 
@@ -137,12 +141,34 @@ func sendAllMetric(ctx context.Context, metrics []Metrics, cfg configure.Config)
 		logger.Log.Warn("Не удалось создать JSON", zap.Error(err))
 		return err
 	}
+	if cfg.CryptoKeyPath != "" {
+		cryptoKeyByte, err := os.ReadFile(cfg.CryptoKeyPath)
+		if err != nil {
+			logger.Log.Warn("Не удалось прочитать файл ключа", zap.Error(err))
+			return err
+		}
+
+		pemBlock, _ := pem.Decode(cryptoKeyByte)
+		cryptoKey, err := x509.ParsePKIXPublicKey(pemBlock.Bytes)
+		if err != nil {
+			logger.Log.Warn("Не удалось распарсить файл ключа", zap.Error(err))
+			return err
+		}
+
+		reqData, err = cryptodata.Encrypt(reqData, cryptoKey)
+		if err != nil {
+			logger.Log.Warn("Не удалось зашифровать данные", zap.Error(err))
+			return err
+		}
+
+	}
 
 	buf, err := gzip.CompressReqData(reqData)
 	if err != nil {
 		logger.Log.Warn("Не удалось сжать данные", zap.Error(err))
 		return err
 	}
+
 	err = retry.Do(
 		func() error {
 			r, _ := http.NewRequest(http.MethodPost, urlStr, buf)
