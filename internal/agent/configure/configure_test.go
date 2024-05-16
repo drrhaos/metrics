@@ -19,8 +19,8 @@ func TestConfig_ReadConfig(t *testing.T) {
 	}
 	tests := []struct {
 		name  string
-		isEnv bool
 		want  want
+		isEnv bool
 	}{
 		{
 			name:  "positive test #1",

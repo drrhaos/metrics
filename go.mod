@@ -11,7 +11,6 @@ require (
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/mdempsky/maligned v0.0.0-20220203220013-d7cd9a96ae47
 	github.com/shirou/gopsutil/v3 v3.24.1
-	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	github.com/timakin/bodyclose v0.0.0-20240125160201-f835fa56326a
 	go.uber.org/zap v1.26.0

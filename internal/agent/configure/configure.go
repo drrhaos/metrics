@@ -11,11 +11,11 @@ import (
 
 type Config struct {
 	Address        string `env:"ADDRESS"`         // адрес эндпоинта HTTP-сервера
+	CryptoKeyPath  string `env:"CRYPTO_KEY"`      // путь до файла с публичным ключом
 	Key            string `env:"KEY"`             // ключ для проверки целостности данных в запросе
 	PollInterval   int64  `env:"POLL_INTERVAL"`   // частота опроса метрик из пакета runtime
 	RateLimit      int    `env:"RATE_LIMIT"`      // количество одновременно исходящих запросов на сервер ограничение «сверху»
 	ReportInterval int64  `env:"REPORT_INTERVAL"` // частота отправки метрик на сервер
-	CryptoKeyPath  string `env:"CRYPTO_KEY"`      // путь до файла с публичным ключом
 }
 
 func (cfg *Config) ReadConfig() bool {

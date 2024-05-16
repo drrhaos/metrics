@@ -181,8 +181,8 @@ func Test_updateMerticsGops(t *testing.T) {
 		metricsCPU *store.StorageContext
 	}
 	tests := []struct {
-		name string
 		args args
+		name string
 	}{
 		{
 			name: "positive test #1",
@@ -224,18 +224,18 @@ func Test_sendAllMetric(t *testing.T) {
 	slMet = append(slMet, metr)
 
 	type args struct {
-		ctx     context.Context
 		metrics []Metrics
+		ctx     context.Context
 		cfg     configure.Config
 	}
 	type want struct {
-		isError bool
 		message string
+		isError bool
 	}
 	tests := []struct {
+		want want
 		name string
 		args args
-		want want
 	}{
 		{
 			name: "positive test #1",

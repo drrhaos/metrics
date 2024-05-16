@@ -142,17 +142,17 @@ func sendAllMetric(ctx context.Context, metrics []Metrics, cfg configure.Config)
 		return err
 	}
 	if cfg.CryptoKeyPath != "" {
-		cryptoKeyByte, err := os.ReadFile(cfg.CryptoKeyPath)
-		if err != nil {
+		cryptoKeyByte, errCrypt := os.ReadFile(cfg.CryptoKeyPath)
+		if errCrypt != nil {
 			logger.Log.Warn("Не удалось прочитать файл ключа", zap.Error(err))
-			return err
+			return errCrypt
 		}
 
 		pemBlock, _ := pem.Decode(cryptoKeyByte)
-		cryptoKey, err := x509.ParsePKIXPublicKey(pemBlock.Bytes)
-		if err != nil {
+		cryptoKey, errCrypt := x509.ParsePKIXPublicKey(pemBlock.Bytes)
+		if errCrypt != nil {
 			logger.Log.Warn("Не удалось распарсить файл ключа", zap.Error(err))
-			return err
+			return errCrypt
 		}
 
 		reqData, err = cryptodata.Encrypt(reqData, cryptoKey)
