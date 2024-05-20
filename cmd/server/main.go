@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"time"
 
 	"metrics/internal/handlers"
@@ -81,6 +83,12 @@ func main() {
 	}
 
 	r := chi.NewRouter()
+
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: r,
+	}
+
 	r.Use(logger.RequestLogger)
 	r.Use(middleware.Compress(5, "application/json", "text/html"))
 	r.Use(decompress.GzipDecompressMiddleware)
@@ -129,9 +137,24 @@ func main() {
 	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
 		metricHandler.GetMetricJSONHandler(w, r, stMetrics)
 	})
+	go func() {
+		if err := http.ListenAndServe(cfg.Address, r); err != nil {
+			logger.Log.Fatal(err.Error())
+		}
+		stMetrics.SaveMetrics(cfg.FileStoragePath)
+	}()
 
-	if err := http.ListenAndServe(cfg.Address, r); err != nil {
-		logger.Log.Fatal(err.Error())
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+	logger.Log.Info("Получен сигнал прерывания, начинается грейсфул шатдаун")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		logger.Log.Error("Ошибка при выполнении грейсфул шатдауна", zap.Error(err))
 	}
-	stMetrics.SaveMetrics(cfg.FileStoragePath)
+
+	logger.Log.Info("Сервер успешно остановлен")
 }

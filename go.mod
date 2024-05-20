@@ -1,8 +1,8 @@
 module metrics
 
-go 1.22
+go 1.21
 
-toolchain go1.22.3
+toolchain go1.21.9
 
 require (
 	github.com/avast/retry-go v3.0.0+incompatible
