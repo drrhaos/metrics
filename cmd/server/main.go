@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/x509"
 	"encoding/pem"
-	"flag"
 	"fmt"
 	"net/http"
 	"os"
@@ -48,17 +47,16 @@ func main() {
 	fmt.Println("Build date:", buildDate)
 	fmt.Println("Build commit:", buildCommit)
 
+	err := logger.Initialize(flagLogLevel)
+	if err != nil {
+		panic(err)
+	}
+
 	var cfg configure.Config
 	ok := cfg.ReadConfig()
 
 	if !ok {
-		flag.PrintDefaults()
 		os.Exit(0)
-	}
-
-	err := logger.Initialize(flagLogLevel)
-	if err != nil {
-		panic(err)
 	}
 
 	stMetrics := &store.StorageContext{}

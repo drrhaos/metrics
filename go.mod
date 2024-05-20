@@ -1,11 +1,13 @@
 module metrics
 
-go 1.21.0
+go 1.22
+
+toolchain go1.22.3
 
 require (
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/caarlos0/env/v10 v10.0.0
-	github.com/caarlos0/env/v6 v6.10.1
+	github.com/caarlos0/env/v11 v11.0.0
 	github.com/go-chi/chi v1.5.5
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/jackc/pgx/v5 v5.5.5
