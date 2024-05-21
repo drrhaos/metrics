@@ -4,9 +4,10 @@ package configure
 import (
 	"encoding/json"
 	"flag"
-	"metrics/internal/logger"
 	"net/url"
 	"os"
+
+	"metrics/internal/logger"
 
 	"github.com/caarlos0/env/v10"
 	"go.uber.org/zap"

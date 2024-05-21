@@ -7,8 +7,9 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"io"
-	"metrics/internal/logger"
 	"net/http"
+
+	"metrics/internal/logger"
 )
 
 // Encrypt шифрование сообщения открытым ключом

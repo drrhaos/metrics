@@ -71,7 +71,6 @@ func (cfg *Config) readEnv() {
 	if cfg.RateLimit == -1 {
 		cfg.RateLimit = tmpConf.RateLimit
 	}
-
 }
 
 func (cfg *Config) readJSON() error {
