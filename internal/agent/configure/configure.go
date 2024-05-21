@@ -30,9 +30,14 @@ func (cfg *Config) readFlags() {
 	key := flag.String("k", "", "Ключ для проверки целостности данных в запросе")
 	cryptoKeyPath := flag.String("crypto-key", "", "Путь до файла с публичным ключом")
 	configPath := flag.String("config", "", "Путь до файла с публичным ключом")
+	configPathShort := flag.String("c", "", "Путь до файла с публичным ключом")
 	flag.Parse()
 
-	cfg.ConfigPath = *configPath
+	if *configPathShort != "" {
+		cfg.ConfigPath = *configPathShort
+	} else {
+		cfg.ConfigPath = *configPath
+	}
 	cfg.Address = *address
 	cfg.ReportInterval = *reportInterval
 	cfg.PollInterval = *pollInterval

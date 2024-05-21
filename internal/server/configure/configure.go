@@ -28,6 +28,7 @@ type Config struct {
 func (cfg *Config) readFlags() {
 	address := flag.String("a", "", "Сетевой адрес host:port")
 	configPath := flag.String("config", "", "Путь до файла конфигурации")
+	configPathShort := flag.String("c", "", "Путь до файла конфигурации")
 	cryptoKeyPath := flag.String("crypto-key", "", "Путь до файла с приватным ключом")
 	databaseDsn := flag.String("d", "",
 		"Сетевой адрес базя данных postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable")
@@ -38,7 +39,11 @@ func (cfg *Config) readFlags() {
 	flag.Parse()
 
 	cfg.Address = *address
-	cfg.ConfigPath = *configPath
+	if *configPathShort != "" {
+		cfg.ConfigPath = *configPathShort
+	} else {
+		cfg.ConfigPath = *configPath
+	}
 	cfg.CryptoKeyPath = *cryptoKeyPath
 	cfg.DatabaseDsn = *databaseDsn
 	cfg.FileStoragePath = *fileStoragePath
