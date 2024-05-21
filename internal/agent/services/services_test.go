@@ -2,17 +2,21 @@ package services
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"runtime"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
 	"metrics/internal/agent/configure"
 	"metrics/internal/handlers"
 	"metrics/internal/middlewares/signature"
 	confSer "metrics/internal/server/configure"
 	"metrics/internal/store"
 	"metrics/internal/store/ramstorage"
-	"net/http"
-	"net/http/httptest"
-	"runtime"
-	"strings"
-	"testing"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
@@ -74,11 +78,12 @@ func Test_prepareBatch(t *testing.T) {
 }
 
 func Test_updateMertics(t *testing.T) {
+	doneCh := make(chan os.Signal, 1)
+	var mut sync.Mutex
 	stMetrics := &store.StorageContext{}
 	stMetrics.SetStorage(ramstorage.NewStorage())
 
 	type args struct {
-		ctx        context.Context
 		metricsCPU *store.StorageContext
 		PollCount  int64
 	}
@@ -90,27 +95,27 @@ func Test_updateMertics(t *testing.T) {
 		{
 			name: "positive test #1",
 			args: args{
-				ctx:        context.Background(),
 				metricsCPU: stMetrics,
-				PollCount:  1,
 			},
 			want: 1,
 		},
 		{
 			name: "positive test #2",
 			args: args{
-				ctx:        context.Background(),
 				metricsCPU: stMetrics,
-				PollCount:  1,
 			},
 			want: 2,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			updateMertics(tt.args.ctx, tt.args.metricsCPU, tt.args.PollCount)
-			poolC, _ := stMetrics.GetCounter(context.Background(), "PollCount")
-			assert.Equal(t, tt.want, poolC)
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			updateMertics(ctx, doneCh, tt.args.metricsCPU, &cfg, &mut)
+			_, exist := stMetrics.GetCounter(context.Background(), "PollCount")
+			assert.Condition(t, func() bool {
+				return exist
+			})
 		})
 	}
 }
@@ -173,11 +178,12 @@ func Test_getFloat64MemStats(t *testing.T) {
 }
 
 func Test_updateMerticsGops(t *testing.T) {
+	doneCh := make(chan os.Signal, 1)
+	var mut sync.Mutex
 	stMetrics := &store.StorageContext{}
 	stMetrics.SetStorage(ramstorage.NewStorage())
 
 	type args struct {
-		ctx        context.Context
 		metricsCPU *store.StorageContext
 	}
 	tests := []struct {
@@ -187,14 +193,19 @@ func Test_updateMerticsGops(t *testing.T) {
 		{
 			name: "positive test #1",
 			args: args{
-				ctx:        context.Background(),
 				metricsCPU: stMetrics,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			updateMerticsGops(tt.args.ctx, tt.args.metricsCPU)
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			updateMerticsGops(ctx, doneCh, tt.args.metricsCPU, &cfg, &mut)
+			_, exist := stMetrics.GetGauge(context.Background(), "TotalMemory")
+			assert.Condition(t, func() bool {
+				return exist
+			})
 		})
 	}
 }

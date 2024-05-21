@@ -12,9 +12,11 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"os/signal"
 	"reflect"
 	"runtime"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -105,28 +107,59 @@ func getFloat64MemStats(m runtime.MemStats, name string) (float64, bool) {
 	return floatValue, true
 }
 
-func updateMertics(ctx context.Context, metricsCPU *store.StorageContext, PollCount int64) {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	metricsCPU.UpdateGauge(ctx, randomValueName, rand.Float64())
-	metricsCPU.UpdateCounter(ctx, pollCountName, PollCount)
+func updateMertics(ctx context.Context, doneCh <-chan os.Signal, metricsCPU *store.StorageContext, cfg *configure.Config, mut *sync.Mutex) {
+	var PollCount int64
+	for {
+		select {
+		case <-ctx.Done():
+			logger.Log.Info("Завершено обновление метрик")
+			return
+		case <-doneCh:
+			logger.Log.Info("Завершено обновление метрик")
+			return
+		default:
+			PollCount++
+			mut.Lock()
+			var m runtime.MemStats
+			runtime.ReadMemStats(&m)
+			metricsCPU.UpdateGauge(ctx, randomValueName, rand.Float64())
+			metricsCPU.UpdateCounter(ctx, pollCountName, PollCount)
 
-	for _, name := range nameGauges {
-		floatValue, ok := getFloat64MemStats(m, name)
-		if ok {
-			metricsCPU.UpdateGauge(ctx, name, floatValue)
+			for _, name := range nameGauges {
+				floatValue, ok := getFloat64MemStats(m, name)
+				if ok {
+					metricsCPU.UpdateGauge(ctx, name, floatValue)
+				}
+			}
+
+			mut.Unlock()
+			time.Sleep(time.Duration(cfg.PollInterval) * time.Second)
 		}
 	}
 }
 
-func updateMerticsGops(ctx context.Context, metricsCPU *store.StorageContext) {
-	m, _ := mem.VirtualMemory()
-	totalMem := m.Total
-	metricsCPU.UpdateGauge(ctx, gaugesTotalMem, float64(totalMem))
-	freeMem := m.Free
-	metricsCPU.UpdateGauge(ctx, gaugesFreeMem, float64(freeMem))
-	countCPU, _ := cpu.Counts(false)
-	metricsCPU.UpdateGauge(ctx, gaugesCPUutil, float64(countCPU))
+func updateMerticsGops(ctx context.Context, doneCh <-chan os.Signal, metricsCPU *store.StorageContext, cfg *configure.Config, mut *sync.Mutex) {
+	for {
+		select {
+		case <-ctx.Done():
+			logger.Log.Info("Завершено обновление метрик")
+			return
+		case <-doneCh:
+			logger.Log.Info("Завершено обновление метрик GOPS")
+			return
+		default:
+			mut.Lock()
+			m, _ := mem.VirtualMemory()
+			totalMem := m.Total
+			metricsCPU.UpdateGauge(ctx, gaugesTotalMem, float64(totalMem))
+			freeMem := m.Free
+			metricsCPU.UpdateGauge(ctx, gaugesFreeMem, float64(freeMem))
+			countCPU, _ := cpu.Counts(false)
+			metricsCPU.UpdateGauge(ctx, gaugesCPUutil, float64(countCPU))
+			mut.Unlock()
+			time.Sleep(time.Duration(cfg.PollInterval) * time.Second)
+		}
+	}
 }
 
 func sendAllMetric(ctx context.Context, metrics []Metrics, cfg configure.Config) error {
@@ -253,6 +286,15 @@ func prepareBatch(ctx context.Context, metricsCPU *store.StorageContext, cfg con
 }
 
 func CollectMetrics(cfg configure.Config) {
+	doneChUpdate := make(chan os.Signal, 1)
+	signal.Notify(doneChUpdate, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+
+	doneChUpdateGops := make(chan os.Signal, 1)
+	signal.Notify(doneChUpdateGops, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+
+	doneChSend := make(chan os.Signal, 1)
+	signal.Notify(doneChSend, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+
 	jobs := make(chan []Metrics, cfg.RateLimit)
 
 	metricsCPU := &store.StorageContext{}
@@ -262,23 +304,11 @@ func CollectMetrics(cfg configure.Config) {
 
 	var mut sync.Mutex
 	go func() {
-		var PollCount int64
-		for {
-			PollCount++
-			mut.Lock()
-			updateMertics(ctx, metricsCPU, PollCount)
-			mut.Unlock()
-			time.Sleep(time.Duration(cfg.PollInterval) * time.Second)
-		}
+		updateMertics(ctx, doneChUpdate, metricsCPU, &cfg, &mut)
 	}()
 
 	go func() {
-		for {
-			mut.Lock()
-			updateMerticsGops(ctx, metricsCPU)
-			mut.Unlock()
-			time.Sleep(time.Duration(cfg.PollInterval) * time.Second)
-		}
+		updateMerticsGops(ctx, doneChUpdateGops, metricsCPU, &cfg, &mut)
 	}()
 
 	for w := 1; w <= cfg.RateLimit; w++ {
@@ -286,11 +316,18 @@ func CollectMetrics(cfg configure.Config) {
 			sendMetricsWorker(ctx, workerID, jobs, cfg)
 		}(w)
 	}
-
-	for {
-		for _, metrics := range prepareBatch(ctx, metricsCPU, cfg) {
-			jobs <- metrics
+	var doneSend bool
+	for !doneSend {
+		select {
+		case <-doneChSend:
+			logger.Log.Info("Завершена отправка метрик")
+			doneSend = true
+		default:
+			for _, metrics := range prepareBatch(ctx, metricsCPU, cfg) {
+				jobs <- metrics
+			}
+			time.Sleep(time.Duration(cfg.ReportInterval) * time.Second)
 		}
-		time.Sleep(time.Duration(cfg.ReportInterval) * time.Second)
 	}
+	logger.Log.Info("Агент остановлен")
 }
