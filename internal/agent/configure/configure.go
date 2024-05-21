@@ -29,15 +29,12 @@ func (cfg *Config) readFlags() {
 	rateLimit := flag.Int("l", -1, "Количество одновременно исходящих запросов на сервер ограничение «сверху»")
 	key := flag.String("k", "", "Ключ для проверки целостности данных в запросе")
 	cryptoKeyPath := flag.String("crypto-key", "", "Путь до файла с публичным ключом")
-	configPath := flag.String("config", "", "Путь до файла с публичным ключом")
-	configPathShort := flag.String("c", "", "Путь до файла с публичным ключом")
+	var configPath string
+	flag.StringVar(&configPath, "config", "", "Путь до файла конфигурации")
+	flag.StringVar(&configPath, "c", "", "Путь до файла конфигурации")
 	flag.Parse()
 
-	if *configPathShort != "" {
-		cfg.ConfigPath = *configPathShort
-	} else {
-		cfg.ConfigPath = *configPath
-	}
+	cfg.ConfigPath = configPath
 	cfg.Address = *address
 	cfg.ReportInterval = *reportInterval
 	cfg.PollInterval = *pollInterval
