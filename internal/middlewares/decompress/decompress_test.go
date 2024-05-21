@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -78,7 +77,6 @@ func TestGzipDecompressMiddleware(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			r.ServeHTTP(w, req)
-			fmt.Println()
 			assert.Equal(t, test.want.code, w.Code)
 		})
 	}

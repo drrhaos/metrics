@@ -29,7 +29,7 @@ func TestRequestLogger(t *testing.T) {
 		want want
 	}{
 		{
-			name: "positive positive chech signature #1",
+			name: "positive positive check signature #1",
 			want: want{
 				code: 200,
 			},

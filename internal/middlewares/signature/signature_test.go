@@ -50,7 +50,7 @@ func TestCheckSignaturMiddleware(t *testing.T) {
 		want want
 	}{
 		{
-			name: "positive positive chech signature #1",
+			name: "positive positive check signature #1",
 			hash: "6To-K1OUlTTQk_Kf529ZSM2VuSMzJ37ELfmhdtmque4=",
 			data: bodyMetr,
 			want: want{
@@ -58,7 +58,7 @@ func TestCheckSignaturMiddleware(t *testing.T) {
 			},
 		},
 		{
-			name: "negative chech signature #2",
+			name: "negative check signature #2",
 			hash: "ZchLggTYnSeSsLHDE_3aI19eZEf2KL-06jh1mbG9hIY=",
 			data: bodyMetr,
 			want: want{
@@ -66,7 +66,7 @@ func TestCheckSignaturMiddleware(t *testing.T) {
 			},
 		},
 		{
-			name: "negative chech signature #3",
+			name: "negative check signature #3",
 			hash: "ZchLggTYnSeSsLHDE_3aI19eZEf2KL-06jh1mbGhIY=",
 			data: bodyMetr,
 			want: want{
