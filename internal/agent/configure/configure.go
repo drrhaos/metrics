@@ -79,12 +79,12 @@ func (cfg *Config) readJSON() error {
 	if cfg.ConfigPath == "" {
 		return nil
 	}
-	dataJson, err := os.ReadFile(cfg.ConfigPath)
+	dataJSON, err := os.ReadFile(cfg.ConfigPath)
 	if err != nil {
 		return err
 	}
 	var tmpConf Config
-	err = json.Unmarshal(dataJson, &tmpConf)
+	err = json.Unmarshal(dataJSON, &tmpConf)
 	if err != nil {
 		return err
 	}
