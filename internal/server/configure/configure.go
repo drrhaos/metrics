@@ -91,13 +91,13 @@ func (cfg *Config) readJSON() error {
 		return nil
 	}
 
-	dataJson, err := os.ReadFile(cfg.ConfigPath)
+	dataJSON, err := os.ReadFile(cfg.ConfigPath)
 	if err != nil {
 		logger.Log.Error("не удалось прочитать файл конфигурации", zap.Error(err))
 		return err
 	}
 	var tmpCfg Config
-	err = json.Unmarshal(dataJson, &tmpCfg)
+	err = json.Unmarshal(dataJSON, &tmpCfg)
 	if err != nil {
 		logger.Log.Error("файл конфигурации имеет не верный формат", zap.Error(err))
 		return err
