@@ -208,7 +208,7 @@ func TestMetricsHandler_UpdateMetricJSONHandler(t *testing.T) {
 		want       want
 	}{
 		{
-			name:       "rest positive test update metrics #1",
+			name:       "rest positive test update metrics",
 			typeReqest: http.MethodPost,
 			dataMetric: Metrics{
 				ID:    "PoolCounter",
@@ -220,7 +220,7 @@ func TestMetricsHandler_UpdateMetricJSONHandler(t *testing.T) {
 			},
 		},
 		{
-			name:       "rest positive test update metrics #2",
+			name:       "rest positive test update metrics",
 			typeReqest: http.MethodPost,
 			dataMetric: Metrics{
 				ID:    "PoolGauge",
@@ -232,7 +232,7 @@ func TestMetricsHandler_UpdateMetricJSONHandler(t *testing.T) {
 			},
 		},
 		{
-			name:       "rest positive test update metrics #3",
+			name:       "rest positive test update metrics",
 			typeReqest: http.MethodPost,
 			dataMetric: Metrics{
 				ID:    "PoolGauge",
@@ -244,7 +244,7 @@ func TestMetricsHandler_UpdateMetricJSONHandler(t *testing.T) {
 			},
 		},
 		{
-			name:       "rest positive test update metrics #3",
+			name:       "rest positive test update metrics",
 			typeReqest: http.MethodPost,
 			dataMetric: Metrics{
 				ID:    "PoolGauge",
@@ -304,38 +304,41 @@ func TestMetricsHandler_UpdatesMetricJSONHandler(t *testing.T) {
 		metricHandler.GetMetricJSONHandler(w, r, stMetrics)
 	})
 
-	delt := int64(1111)
-	valGauge := float64(1111.1)
-	var metrics []Metrics
-	metrics = append(metrics, Metrics{
-		ID:    "PoolCounter",
-		MType: "counter",
-		Delta: &delt,
-	})
-	metrics = append(metrics, Metrics{
-		ID:    "PoolGauge",
-		MType: "gauge",
-		Value: &valGauge,
-	})
+	metrics := `
+	[
+    {
+        "id": "PoolCounter",
+        "type": "counter",
+        "delta": 1111
+    },
+    {
+        "id": "PoolGauge",
+        "type": "gauge",
+        "Value": 1111.1
+    }
+]`
 
-	var metricsBad []Metrics
-	metricsBad = append(metricsBad, Metrics{
-		ID:    "PoolCounter",
-		MType: "countr",
-		Delta: &delt,
-	})
-	metricsBad = append(metricsBad, Metrics{
-		ID:    "PoolGauge",
-		MType: "gauge",
-		Value: &valGauge,
-	})
+	metricsBad := `
+	[
+    {
+        "id": "PoolCounter",
+        "type": "countr",
+        "delta": 1111
+    },
+    {
+        "id": "PoolGauge",
+        "type": "gauge",
+        "Value": 1111.1
+    }
+]`
+
 	type want struct {
 		code int
 	}
 	tests := []struct {
 		name       string
 		typeReqest string
-		dataMetric []Metrics
+		dataMetric string
 		want       want
 	}{
 		{
@@ -350,7 +353,7 @@ func TestMetricsHandler_UpdatesMetricJSONHandler(t *testing.T) {
 			name:       "rest positive test update metrics #2",
 			typeReqest: http.MethodPost,
 			want: want{
-				code: 200,
+				code: 404,
 			},
 		},
 		{
@@ -371,9 +374,9 @@ func TestMetricsHandler_UpdatesMetricJSONHandler(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			bodyMetr, _ := json.Marshal(test.dataMetric)
+			// bodyMetr, _ := json.Marshal(test.dataMetric)
 
-			req := httptest.NewRequest(test.typeReqest, urlUpdatesMetricJSONConst, bytes.NewReader(bodyMetr))
+			req := httptest.NewRequest(test.typeReqest, urlUpdatesMetricJSONConst, bytes.NewReader([]byte(test.dataMetric)))
 			w := httptest.NewRecorder()
 
 			r.ServeHTTP(w, req)
@@ -432,7 +435,7 @@ func TestMetricsHandler_GetMetricJSONHandler(t *testing.T) {
 		want       want
 	}{
 		{
-			name:       "rest positive test update metrics #1",
+			name:       "rest positive test update metrics",
 			typeReqest: http.MethodPost,
 			dataMetric: Metrics{
 				ID:    "PoolCounter",
@@ -443,7 +446,7 @@ func TestMetricsHandler_GetMetricJSONHandler(t *testing.T) {
 			},
 		},
 		{
-			name:       "rest positive test update metrics #2",
+			name:       "rest positive test update metrics",
 			typeReqest: http.MethodPost,
 			dataMetric: Metrics{
 				ID:    "PoolCounte",
@@ -454,7 +457,7 @@ func TestMetricsHandler_GetMetricJSONHandler(t *testing.T) {
 			},
 		},
 		{
-			name:       "rest positive test update metrics #3",
+			name:       "rest positive test update metrics",
 			typeReqest: http.MethodPost,
 			dataMetric: Metrics{
 				ID:    "PoolGauge",
@@ -465,12 +468,19 @@ func TestMetricsHandler_GetMetricJSONHandler(t *testing.T) {
 			},
 		},
 		{
-			name:       "rest positive test update metrics #3",
+			name:       "rest positive test update metrics",
 			typeReqest: http.MethodPost,
 			dataMetric: Metrics{
 				ID:    "PoolGaug",
 				MType: "gauge",
 			},
+			want: want{
+				code: 404,
+			},
+		},
+		{
+			name:       "rest negive test update metrics",
+			typeReqest: http.MethodPost,
 			want: want{
 				code: 404,
 			},

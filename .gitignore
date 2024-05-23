@@ -27,3 +27,6 @@ vendor/
 .idea
 .vscode
 metrics-db.json
+data/*
+test.sh
+test_cover.sh
