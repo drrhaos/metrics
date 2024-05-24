@@ -13,6 +13,7 @@ import (
 
 	"metrics/internal/agent/configure"
 	"metrics/internal/handlers"
+	"metrics/internal/middlewares/decompress"
 	"metrics/internal/middlewares/signature"
 	confSer "metrics/internal/server/configure"
 	"metrics/internal/store"
@@ -287,38 +288,62 @@ func Test_sendAllMetric(t *testing.T) {
 	}
 }
 
-// func TestCollectMetrics(t *testing.T) {
-// 	stMetrics := &store.StorageContext{}
-// 	stMetrics.SetStorage(ramstorage.NewStorage())
+func TestCollectMetrics(t *testing.T) {
+	stMetrics := &store.StorageContext{}
+	stMetrics.SetStorage(ramstorage.NewStorage())
 
-// 	metricHandler := handlers.NewMetricHandler(&configServer)
-// 	r := chi.NewRouter()
-// 	r.Post("/updates/", func(w http.ResponseWriter, r *http.Request) {
-// 		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
-// 	})
+	metricHandler := handlers.NewMetricHandler(&configServer)
+	r := chi.NewRouter()
+	r.Use(decompress.GzipDecompressMiddleware)
+	r.Post("/updates/", func(w http.ResponseWriter, r *http.Request) {
+		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
+	})
 
-// 	server := httptest.NewServer(r)
-// 	defer server.Close()
+	server := httptest.NewServer(r)
+	defer server.Close()
 
-// 	type args struct {
-// 		cfg configure.Config
-// 	}
-// 	tests := []struct {
-// 		name string
-// 		args args
-// 	}{
-// 		{
-// 			name: "positive test #1",
-// 			args: args{
-// 				cfg: configure.Config{
-// 					Address: strings.Replace(server.URL, "http://", "", 7),
-// 				},
-// 			},
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			CollectMetrics(tt.args.cfg)
-// 		})
-// 	}
-// }
+	type args struct {
+		cfg configure.Config
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{
+			name: "positive test",
+			args: args{
+				cfg: configure.Config{
+					Address:        strings.Replace(server.URL, "http://", "", 7),
+					PollInterval:   2,
+					ReportInterval: 3,
+					RateLimit:      10,
+				},
+			},
+			want: 31,
+		},
+		{
+			name: "negative test",
+			args: args{
+				cfg: configure.Config{
+					Address:        "192.168.1.1:9990",
+					PollInterval:   2,
+					ReportInterval: 3,
+					RateLimit:      10,
+				},
+			},
+			want: 31,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+			defer cancel()
+
+			CollectMetrics(ctx, tt.args.cfg)
+			met, _ := stMetrics.GetGauges(context.Background())
+			assert.Equal(t, tt.want, len(met))
+
+		})
+	}
+}

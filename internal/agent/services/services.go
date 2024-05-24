@@ -285,7 +285,7 @@ func prepareBatch(ctx context.Context, metricsCPU *store.StorageContext, cfg con
 	return metricsBatches
 }
 
-func CollectMetrics(cfg configure.Config) {
+func CollectMetrics(ctx context.Context, cfg configure.Config) {
 	doneChUpdate := make(chan os.Signal, 1)
 	signal.Notify(doneChUpdate, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
@@ -299,8 +299,6 @@ func CollectMetrics(cfg configure.Config) {
 
 	metricsCPU := &store.StorageContext{}
 	metricsCPU.SetStorage(ramstorage.NewStorage())
-
-	ctx := context.Background()
 
 	var mut sync.Mutex
 	go func() {
@@ -322,6 +320,9 @@ func CollectMetrics(cfg configure.Config) {
 		case <-doneChSend:
 			logger.Log.Info("Завершена отправка метрик")
 			doneSend = true
+		case <-ctx.Done():
+			logger.Log.Info("Завершена отправка метрик")
+			return
 		default:
 			for _, metrics := range prepareBatch(ctx, metricsCPU, cfg) {
 				jobs <- metrics

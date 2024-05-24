@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -35,5 +36,5 @@ func main() {
 		os.Exit(0)
 	}
 
-	services.CollectMetrics(cfg)
+	services.CollectMetrics(context.Background(), cfg)
 }

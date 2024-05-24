@@ -339,7 +339,7 @@ func TestRAMStorage_SaveMetrics(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "positive test #1",
+			name: "positive test",
 			fields: fields{
 				Gauge:   map[string]float64{"first": 34.1},
 				Counter: map[string]int64{"first": 34},
@@ -350,7 +350,7 @@ func TestRAMStorage_SaveMetrics(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "negative test #2",
+			name: "negative test",
 			fields: fields{
 				Gauge:   map[string]float64{"first": 34.1},
 				Counter: map[string]int64{"first": 34},
@@ -395,14 +395,14 @@ func TestRAMStorage_LoadMetrics(t *testing.T) {
 		want bool
 	}{
 		{
-			name: "positive test #1",
+			name: "positive test",
 			args: args{
 				filePath: fileTmp,
 			},
 			want: true,
 		},
 		{
-			name: "negative test #1",
+			name: "negative test",
 			args: args{
 				filePath: fileTmpBad,
 			},
