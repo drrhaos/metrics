@@ -2,17 +2,21 @@ package services
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"runtime"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
 	"metrics/internal/agent/configure"
 	"metrics/internal/handlers"
+	"metrics/internal/middlewares/cryptodata"
 	"metrics/internal/middlewares/decompress"
 	"metrics/internal/middlewares/signature"
 	confSer "metrics/internal/server/configure"
@@ -80,7 +84,6 @@ func Test_prepareBatch(t *testing.T) {
 
 func Test_updateMertics(t *testing.T) {
 	doneCh := make(chan os.Signal, 1)
-	var mut sync.Mutex
 	stMetrics := &store.StorageContext{}
 	stMetrics.SetStorage(ramstorage.NewStorage())
 
@@ -112,7 +115,7 @@ func Test_updateMertics(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
-			updateMertics(ctx, doneCh, tt.args.metricsCPU, &cfg, &mut)
+			updateMertics(ctx, doneCh, tt.args.metricsCPU, &cfg)
 			_, exist := stMetrics.GetCounter(context.Background(), "PollCount")
 			assert.Condition(t, func() bool {
 				return exist
@@ -180,7 +183,6 @@ func Test_getFloat64MemStats(t *testing.T) {
 
 func Test_updateMerticsGops(t *testing.T) {
 	doneCh := make(chan os.Signal, 1)
-	var mut sync.Mutex
 	stMetrics := &store.StorageContext{}
 	stMetrics.SetStorage(ramstorage.NewStorage())
 
@@ -202,7 +204,7 @@ func Test_updateMerticsGops(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
-			updateMerticsGops(ctx, doneCh, tt.args.metricsCPU, &cfg, &mut)
+			updateMerticsGops(ctx, doneCh, tt.args.metricsCPU, &cfg)
 			_, exist := stMetrics.GetGauge(context.Background(), "TotalMemory")
 			assert.Condition(t, func() bool {
 				return exist
@@ -212,6 +214,34 @@ func Test_updateMerticsGops(t *testing.T) {
 }
 
 func Test_sendAllMetric(t *testing.T) {
+	fileTmp := "/tmp/private.pem"
+	defer os.Remove(fileTmp)
+	filePubTmp := "/tmp/public.pem"
+	defer os.Remove(fileTmp)
+
+	privateKeyGood, _ := rsa.GenerateKey(rand.Reader, 2048)
+
+	privateKeyDer := x509.MarshalPKCS1PrivateKey(privateKeyGood)
+	privateKeyBlock := pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: privateKeyDer,
+	}
+	privateKeyFile, _ := os.Create(fileTmp)
+
+	pem.Encode(privateKeyFile, &privateKeyBlock)
+
+	pubKey := &privateKeyGood.PublicKey
+	pubKeyBytes, _ := x509.MarshalPKIXPublicKey(pubKey)
+
+	pubKeyPEM := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "RSA PUBLIC KEY",
+			Bytes: pubKeyBytes,
+		},
+	)
+
+	os.WriteFile(filePubTmp, pubKeyPEM, 0o644)
+
 	stMetrics := &store.StorageContext{}
 	stMetrics.SetStorage(ramstorage.NewStorage())
 
@@ -219,6 +249,7 @@ func Test_sendAllMetric(t *testing.T) {
 	key := "test"
 	r := chi.NewRouter()
 	r.Use(signature.AddSignatureMiddleware(key))
+	r.Use(cryptodata.DecryptMiddleware(fileTmp))
 	r.Post("/updates/", func(w http.ResponseWriter, r *http.Request) {
 		metricHandler.UpdatesMetricJSONHandler(w, r, stMetrics)
 	})
@@ -255,8 +286,9 @@ func Test_sendAllMetric(t *testing.T) {
 				ctx:     context.Background(),
 				metrics: slMet,
 				cfg: configure.Config{
-					Address: strings.Replace(server.URL, "http://", "", 7),
-					Key:     key,
+					Address:       strings.Replace(server.URL, "http://", "", 7),
+					Key:           key,
+					CryptoKeyPath: filePubTmp,
 				},
 			},
 			want: want{

@@ -6,8 +6,11 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"reflect"
 	"testing"
 
@@ -16,43 +19,66 @@ import (
 )
 
 func TestDecryptMiddleware(t *testing.T) {
+	fileTmp := "/tmp/private.pem"
+	defer os.Remove(fileTmp)
+
 	privateKeyGood, _ := rsa.GenerateKey(rand.Reader, 2048)
 	privateKeyBad, _ := rsa.GenerateKey(rand.Reader, 2048)
 
-	r := chi.NewRouter()
-	r.Use(DecryptMiddleware(privateKeyGood))
-	r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("test"))
-		w.WriteHeader(http.StatusOK)
-	})
+	privateKeyDer := x509.MarshalPKCS1PrivateKey(privateKeyGood)
+	privateKeyBlock := pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: privateKeyDer,
+	}
+	privateKeyFile, err := os.Create(fileTmp)
+	if err != nil {
+		panic(err)
+	}
+	err = pem.Encode(privateKeyFile, &privateKeyBlock)
+	if err != nil {
+		panic(err)
+	}
 
 	type want struct {
 		code int
 		body string
 	}
 	tests := []struct {
-		name       string
-		privateKey *rsa.PrivateKey
-		want       want
+		name           string
+		privateKeyPath string
+		privateKey     *rsa.PrivateKey
+		want           want
 	}{
 		{
-			name:       "positive positive check Decrypt #1",
-			privateKey: privateKeyGood,
+			name:           "positive positive check Decrypt #1",
+			privateKeyPath: fileTmp,
+			privateKey:     privateKeyGood,
 			want: want{
 				body: "test",
 				code: 200,
 			},
 		},
 		{
-			name:       "negative positive check Decrypt #2",
-			privateKey: privateKeyBad,
+			name:           "positive positive check Decrypt #2",
+			privateKeyPath: "",
+			privateKey:     privateKeyGood,
+			want: want{
+				body: "test",
+				code: 200,
+			},
+		},
+		{
+			name:           "negative positive check Decrypt #3",
+			privateKeyPath: fileTmp,
+			privateKey:     privateKeyBad,
 			want: want{
 				code: 400,
 			},
 		},
 		{
-			name:       "negative positive check Decrypt #3",
-			privateKey: privateKeyBad,
+			name:           "negative positive check Decrypt #4",
+			privateKeyPath: fileTmp,
+			privateKey:     privateKeyBad,
 			want: want{
 				code: 400,
 			},
@@ -60,6 +86,13 @@ func TestDecryptMiddleware(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			r := chi.NewRouter()
+			r.Use(DecryptMiddleware(test.privateKeyPath))
+			r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte("test"))
+				w.WriteHeader(http.StatusOK)
+			})
+
 			ciphertext, _ := rsa.EncryptPKCS1v15(rand.Reader, &test.privateKey.PublicKey, []byte("test"))
 
 			req := httptest.NewRequest(http.MethodPost, "/update", bytes.NewReader(ciphertext))

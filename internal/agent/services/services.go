@@ -15,7 +15,6 @@ import (
 	"os/signal"
 	"reflect"
 	"runtime"
-	"sync"
 	"syscall"
 	"time"
 
@@ -100,7 +99,7 @@ func getFloat64MemStats(m runtime.MemStats, name string) (float64, bool) {
 	return floatValue, true
 }
 
-func updateMertics(ctx context.Context, doneCh <-chan os.Signal, metricsCPU *store.StorageContext, cfg *configure.Config, mut *sync.Mutex) {
+func updateMertics(ctx context.Context, doneCh <-chan os.Signal, metricsCPU *store.StorageContext, cfg *configure.Config) {
 	var PollCount int64
 	timer := time.NewTicker(time.Duration(cfg.PollInterval) * time.Second)
 	defer timer.Stop()
@@ -132,7 +131,9 @@ func updateMertics(ctx context.Context, doneCh <-chan os.Signal, metricsCPU *sto
 	}
 }
 
-func updateMerticsGops(ctx context.Context, doneCh <-chan os.Signal, metricsCPU *store.StorageContext, cfg *configure.Config, mut *sync.Mutex) {
+func updateMerticsGops(ctx context.Context, doneCh <-chan os.Signal, metricsCPU *store.StorageContext, cfg *configure.Config) {
+	timer := time.NewTicker(time.Duration(cfg.PollInterval) * time.Second)
+	defer timer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
@@ -142,16 +143,24 @@ func updateMerticsGops(ctx context.Context, doneCh <-chan os.Signal, metricsCPU 
 			logger.Log.Info("Завершено обновление метрик GOPS")
 			return
 		default:
-			mut.Lock()
-			m, _ := mem.VirtualMemory()
-			totalMem := m.Total
-			metricsCPU.UpdateGauge(ctx, gaugesTotalMem, float64(totalMem))
-			freeMem := m.Free
-			metricsCPU.UpdateGauge(ctx, gaugesFreeMem, float64(freeMem))
-			countCPU, _ := cpu.Counts(false)
-			metricsCPU.UpdateGauge(ctx, gaugesCPUutil, float64(countCPU))
-			mut.Unlock()
-			time.Sleep(time.Duration(cfg.PollInterval) * time.Second)
+			select {
+			case <-ctx.Done():
+				logger.Log.Info("Завершено обновление метрик")
+				return
+			case <-doneCh:
+				logger.Log.Info("Завершено обновление метрик")
+				return
+			default:
+				<-timer.C
+
+				m, _ := mem.VirtualMemory()
+				totalMem := m.Total
+				metricsCPU.UpdateGauge(ctx, gaugesTotalMem, float64(totalMem))
+				freeMem := m.Free
+				metricsCPU.UpdateGauge(ctx, gaugesFreeMem, float64(freeMem))
+				countCPU, _ := cpu.Counts(false)
+				metricsCPU.UpdateGauge(ctx, gaugesCPUutil, float64(countCPU))
+			}
 		}
 	}
 }
@@ -275,13 +284,12 @@ func CollectMetrics(ctx context.Context, cfg configure.Config) {
 	metricsCPU := &store.StorageContext{}
 	metricsCPU.SetStorage(ramstorage.NewStorage())
 
-	var mut sync.Mutex
 	go func() {
-		updateMertics(ctx, doneChUpdate, metricsCPU, &cfg, &mut)
+		updateMertics(ctx, doneChUpdate, metricsCPU, &cfg)
 	}()
 
 	go func() {
-		updateMerticsGops(ctx, doneChUpdateGops, metricsCPU, &cfg, &mut)
+		updateMerticsGops(ctx, doneChUpdateGops, metricsCPU, &cfg)
 	}()
 
 	for w := 1; w <= cfg.RateLimit; w++ {

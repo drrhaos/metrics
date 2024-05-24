@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"net/http"
 	"os"
@@ -93,22 +91,7 @@ func main() {
 	r.Use(logger.RequestLogger)
 	r.Use(middleware.Compress(5, "application/json", "text/html"))
 	r.Use(decompress.GzipDecompressMiddleware)
-	if cfg.CryptoKeyPath != "" {
-		var privateKeyPEM []byte
-		privateKeyPEM, err = os.ReadFile(cfg.CryptoKeyPath)
-		if err != nil {
-			logger.Log.Warn("Не удалось прочитать файл ключа", zap.Error(err))
-		}
-
-		pemBlock, _ := pem.Decode(privateKeyPEM)
-		privateKey, err := x509.ParsePKCS8PrivateKey(pemBlock.Bytes)
-		if err != nil {
-			logger.Log.Warn("Не удалось преобразовать ключ", zap.Error(err))
-		}
-
-		r.Use(cryptodata.DecryptMiddleware(privateKey))
-	}
-
+	r.Use(cryptodata.DecryptMiddleware(cfg.CryptoKeyPath))
 	r.Use(signature.CheckSignaturMiddleware(cfg.Key))
 	r.Use(signature.AddSignatureMiddleware(cfg.Key))
 	r.Mount("/debug", middleware.Profiler())

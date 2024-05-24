@@ -6,10 +6,15 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"io"
 	"net/http"
+	"os"
 
 	"metrics/internal/logger"
+
+	"go.uber.org/zap"
 )
 
 // Encrypt шифрование сообщения открытым ключом
@@ -62,10 +67,26 @@ func Decrypt(ciphertext []byte, privateKey any) ([]byte, error) {
 }
 
 // DecryptMiddleware обработчик распакавывает тело ответа.
-func DecryptMiddleware(key any) func(h http.Handler) http.Handler {
+func DecryptMiddleware(keyPath string) func(h http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			if key == nil {
+			if keyPath == "" {
+				next.ServeHTTP(res, req)
+				return
+			}
+
+			var privateKeyPEM []byte
+			privateKeyPEM, err := os.ReadFile(keyPath)
+			if err != nil {
+				logger.Log.Warn("Не удалось прочитать файл ключа", zap.Error(err))
+				next.ServeHTTP(res, req)
+				return
+			}
+
+			pemBlock, _ := pem.Decode(privateKeyPEM)
+			privateKey, err := x509.ParsePKCS1PrivateKey(pemBlock.Bytes)
+			if err != nil {
+				logger.Log.Warn("Не удалось преобразовать ключ", zap.Error(err))
 				next.ServeHTTP(res, req)
 				return
 			}
@@ -78,7 +99,7 @@ func DecryptMiddleware(key any) func(h http.Handler) http.Handler {
 				return
 			}
 
-			cipherTextBytes, err := Decrypt(body, key)
+			cipherTextBytes, err := Decrypt(body, privateKey)
 			if err != nil {
 				logger.Log.Warn("Ошибка расшифроки данных")
 				res.WriteHeader(http.StatusBadRequest)
