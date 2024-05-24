@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"metrics/internal/logger"
+	"metrics/internal/store"
 )
 
 // RAMStorage хранилище метрик.
@@ -158,6 +159,22 @@ func (storage *RAMStorage) GetGauge(ctx context.Context, nameMetric string) (cur
 	}
 
 	return currentValue, exists
+}
+
+func (storage *RAMStorage) GetBatchMetrics(ctx context.Context) (metrics []store.Metrics, exists bool) {
+	storage.Mut.Lock()
+	defer storage.Mut.Unlock()
+
+	for nameMetric, valueMetric := range storage.Gauge {
+		hd := valueMetric
+		metrics = append(metrics, store.Metrics{ID: nameMetric, MType: "gauge", Value: &hd})
+	}
+
+	for nameMetric, valueMetric := range storage.Counter {
+		hd := valueMetric
+		metrics = append(metrics, store.Metrics{ID: nameMetric, MType: "counter", Delta: &hd})
+	}
+	return metrics, true
 }
 
 // Ping проверяет доступность хранилища.

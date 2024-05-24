@@ -6,6 +6,13 @@ import (
 	_ "net/http/pprof"
 )
 
+type Metrics struct {
+	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+	ID    string   `json:"id"`              // имя метрики
+	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
+}
+
 // StorageInterface описывает набор методов которые должны реализовывать хранилища.
 type StorageInterface interface {
 	SaveMetrics(filePath string) bool
@@ -17,6 +24,7 @@ type StorageInterface interface {
 	GetCounter(ctx context.Context, nameMetric string) (currentValue int64, exists bool)
 	GetGauge(ctx context.Context, nameMetric string) (currentValue float64, exists bool)
 	Ping(ctx context.Context) bool
+	GetBatchMetrics(ctx context.Context) (metrics []Metrics, exists bool)
 }
 
 // StorageContext содержит текущее хранилище.
@@ -72,4 +80,8 @@ func (sc *StorageContext) GetGauge(ctx context.Context, nameMetric string) (curr
 // Ping проверяет доступность хранилища.
 func (sc *StorageContext) Ping(ctx context.Context) (exists bool) {
 	return sc.storage.Ping(ctx)
+}
+
+func (sc *StorageContext) GetBatchMetrics(ctx context.Context) (metrics []Metrics, exists bool) {
+	return sc.storage.GetBatchMetrics(ctx)
 }

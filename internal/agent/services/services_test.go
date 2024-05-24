@@ -227,16 +227,16 @@ func Test_sendAllMetric(t *testing.T) {
 	defer server.Close()
 
 	delt := int64(11)
-	metr := Metrics{
+	metr := store.Metrics{
 		ID:    "PoolCounter",
 		MType: "counter",
 		Delta: &delt,
 	}
-	var slMet []Metrics
+	var slMet []store.Metrics
 	slMet = append(slMet, metr)
 
 	type args struct {
-		metrics []Metrics
+		metrics []store.Metrics
 		ctx     context.Context
 		cfg     configure.Config
 	}

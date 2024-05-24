@@ -77,12 +77,12 @@ var nameGauges = []string{
 	"TotalAlloc",
 }
 
-type Metrics struct {
-	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
-	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
-	ID    string   `json:"id"`              // имя метрики
-	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
-}
+// type Metrics struct {
+// 	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+// 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+// 	ID    string   `json:"id"`              // имя метрики
+// 	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
+// }
 
 func customDelay() retry.DelayTypeFunc {
 	return func(n uint, _ error, config *retry.Config) time.Duration {
@@ -109,6 +109,9 @@ func getFloat64MemStats(m runtime.MemStats, name string) (float64, bool) {
 
 func updateMertics(ctx context.Context, doneCh <-chan os.Signal, metricsCPU *store.StorageContext, cfg *configure.Config, mut *sync.Mutex) {
 	var PollCount int64
+	timer := time.NewTicker(time.Duration(cfg.PollInterval) * time.Second)
+	defer timer.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -118,8 +121,9 @@ func updateMertics(ctx context.Context, doneCh <-chan os.Signal, metricsCPU *sto
 			logger.Log.Info("Завершено обновление метрик")
 			return
 		default:
+			<-timer.C
+
 			PollCount++
-			mut.Lock()
 			var m runtime.MemStats
 			runtime.ReadMemStats(&m)
 			metricsCPU.UpdateGauge(ctx, randomValueName, rand.Float64())
@@ -131,9 +135,6 @@ func updateMertics(ctx context.Context, doneCh <-chan os.Signal, metricsCPU *sto
 					metricsCPU.UpdateGauge(ctx, name, floatValue)
 				}
 			}
-
-			mut.Unlock()
-			time.Sleep(time.Duration(cfg.PollInterval) * time.Second)
 		}
 	}
 }
@@ -162,7 +163,7 @@ func updateMerticsGops(ctx context.Context, doneCh <-chan os.Signal, metricsCPU 
 	}
 }
 
-func sendAllMetric(ctx context.Context, metrics []Metrics, cfg configure.Config) error {
+func sendAllMetric(ctx context.Context, metrics []store.Metrics, cfg configure.Config) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
 	defer cancel()
 
@@ -232,37 +233,37 @@ func sendAllMetric(ctx context.Context, metrics []Metrics, cfg configure.Config)
 	return nil
 }
 
-func sendMetricsWorker(ctx context.Context, workerID int, jobs <-chan []Metrics, cfg configure.Config) {
+func sendMetricsWorker(ctx context.Context, workerID int, jobs <-chan []store.Metrics, cfg configure.Config) {
 	for job := range jobs {
 		logger.Log.Info(fmt.Sprintf("Воркер %d количество метрик %d", workerID, len(job)))
 		sendAllMetric(ctx, job, cfg)
 	}
 }
 
-func prepareBatch(ctx context.Context, metricsCPU *store.StorageContext, cfg configure.Config) (metricsBatches [][]Metrics) {
+func prepareBatch(ctx context.Context, metricsCPU *store.StorageContext, cfg configure.Config) (metricsBatches [][]store.Metrics) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	var metrics []Metrics
+	metrics, _ := metricsCPU.GetBatchMetrics(ctx)
 
-	currentGauges, ok := metricsCPU.GetGauges(ctx)
-	if !ok {
-		return metricsBatches
-	}
+	// currentGauges, ok := metricsCPU.GetGauges(ctx)
+	// if !ok {
+	// 	return metricsBatches
+	// }
 
-	for nameMetric, valueMetric := range currentGauges {
-		hd := valueMetric
-		metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricGauge, Value: &hd})
-	}
+	// for nameMetric, valueMetric := range currentGauges {
+	// 	hd := valueMetric
+	// 	metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricGauge, Value: &hd})
+	// }
 
-	currentCounters, ok := metricsCPU.GetCounters(ctx)
-	if !ok {
-		return metricsBatches
-	}
-	for nameMetric, valueMetric := range currentCounters {
-		hd := valueMetric
-		metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricCounter, Delta: &hd})
-	}
+	// currentCounters, ok := metricsCPU.GetCounters(ctx)
+	// if !ok {
+	// 	return metricsBatches
+	// }
+	// for nameMetric, valueMetric := range currentCounters {
+	// 	hd := valueMetric
+	// 	metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricCounter, Delta: &hd})
+	// }
 
 	lenMetrics := len(metrics)
 	var countBatch int
@@ -271,7 +272,7 @@ func prepareBatch(ctx context.Context, metricsCPU *store.StorageContext, cfg con
 	} else if cfg.RateLimit <= lenMetrics {
 		countBatch = cfg.RateLimit
 	}
-	metricsBatches = make([][]Metrics, countBatch)
+	metricsBatches = make([][]store.Metrics, countBatch)
 
 	i := 0
 	for j := 0; j < lenMetrics; j++ {
@@ -295,7 +296,7 @@ func CollectMetrics(ctx context.Context, cfg configure.Config) {
 	doneChSend := make(chan os.Signal, 1)
 	signal.Notify(doneChSend, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
-	jobs := make(chan []Metrics, cfg.RateLimit)
+	jobs := make(chan []store.Metrics, cfg.RateLimit)
 
 	metricsCPU := &store.StorageContext{}
 	metricsCPU.SetStorage(ramstorage.NewStorage())

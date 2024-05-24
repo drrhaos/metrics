@@ -18,7 +18,6 @@ import (
 	"metrics/internal/middlewares/signature"
 	"metrics/internal/server/configure"
 	"metrics/internal/store"
-	"metrics/internal/store/pg"
 	"metrics/internal/store/ramstorage"
 
 	_ "net/http/pprof"
@@ -65,7 +64,7 @@ func main() {
 	stMetrics := &store.StorageContext{}
 
 	if cfg.DatabaseDsn != "" {
-		stMetrics.SetStorage(pg.NewDatabase(cfg.DatabaseDsn))
+		// stMetrics.SetStorage(pg.NewDatabase(cfg.DatabaseDsn))
 	} else {
 		stMetrics.SetStorage(ramstorage.NewStorage())
 	}
