@@ -77,13 +77,6 @@ var nameGauges = []string{
 	"TotalAlloc",
 }
 
-// type Metrics struct {
-// 	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
-// 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
-// 	ID    string   `json:"id"`              // имя метрики
-// 	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
-// }
-
 func customDelay() retry.DelayTypeFunc {
 	return func(n uint, _ error, config *retry.Config) time.Duration {
 		return time.Duration(sleepStep[n])
@@ -245,25 +238,6 @@ func prepareBatch(ctx context.Context, metricsCPU *store.StorageContext, cfg con
 	defer cancel()
 
 	metrics, _ := metricsCPU.GetBatchMetrics(ctx)
-
-	// currentGauges, ok := metricsCPU.GetGauges(ctx)
-	// if !ok {
-	// 	return metricsBatches
-	// }
-
-	// for nameMetric, valueMetric := range currentGauges {
-	// 	hd := valueMetric
-	// 	metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricGauge, Value: &hd})
-	// }
-
-	// currentCounters, ok := metricsCPU.GetCounters(ctx)
-	// if !ok {
-	// 	return metricsBatches
-	// }
-	// for nameMetric, valueMetric := range currentCounters {
-	// 	hd := valueMetric
-	// 	metrics = append(metrics, Metrics{ID: nameMetric, MType: typeMetricCounter, Delta: &hd})
-	// }
 
 	lenMetrics := len(metrics)
 	var countBatch int

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"metrics/internal/logger"
+	"metrics/internal/store"
 
 	"github.com/avast/retry-go"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -276,6 +277,69 @@ func (db *Database) GetCounters(ctx context.Context) (map[string]int64, bool) {
 		return valuesMetric, false
 	}
 	return valuesMetric, true
+}
+
+func (db *Database) GetBatchMetrics(ctx context.Context) (metrics []store.Metrics, exists bool) {
+	err := retry.Do(
+		func() error {
+			rows, err := db.Conn.Query(ctx,
+				`SELECT name, value
+		FROM counters`)
+			if err != nil {
+				return err
+			}
+			defer rows.Close()
+
+			for rows.Next() {
+				var nameMetric string
+				var valueMetric int64
+				err = rows.Scan(&nameMetric, &valueMetric)
+				if err != nil {
+					return err
+				}
+				metrics = append(metrics, store.Metrics{ID: nameMetric, Delta: &valueMetric, MType: "counter"})
+			}
+			return nil
+		},
+		retry.Attempts(3),
+		retry.DelayType(customDelay()),
+	)
+	if err != nil {
+		logger.Log.Warn("Не удалось получить значение", zap.Error(err))
+		return metrics, false
+	}
+
+	err = retry.Do(
+		func() error {
+			rows, err := db.Conn.Query(ctx,
+				`SELECT name, value
+				FROM gauges`)
+			if err != nil {
+				return err
+			}
+			defer rows.Close()
+			for rows.Next() {
+				var nameMetric string
+				var valueMetric float64
+				err = rows.Scan(&nameMetric, &valueMetric)
+				if err != nil {
+					return err
+				}
+				metrics = append(metrics, store.Metrics{ID: nameMetric, Value: &valueMetric, MType: "gauge"})
+
+			}
+
+			return nil
+		},
+		retry.Attempts(3),
+		retry.DelayType(customDelay()),
+	)
+	if err != nil {
+		logger.Log.Warn("Не удалось получить значение", zap.Error(err))
+		return metrics, false
+	}
+
+	return metrics, true
 }
 
 func customDelay() retry.DelayTypeFunc {

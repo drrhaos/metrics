@@ -343,7 +343,6 @@ func TestCollectMetrics(t *testing.T) {
 			CollectMetrics(ctx, tt.args.cfg)
 			met, _ := stMetrics.GetGauges(context.Background())
 			assert.Equal(t, tt.want, len(met))
-
 		})
 	}
 }
