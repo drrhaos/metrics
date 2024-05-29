@@ -143,24 +143,15 @@ func updateMerticsGops(ctx context.Context, doneCh <-chan os.Signal, metricsCPU 
 			logger.Log.Info("Завершено обновление метрик GOPS")
 			return
 		default:
-			select {
-			case <-ctx.Done():
-				logger.Log.Info("Завершено обновление метрик")
-				return
-			case <-doneCh:
-				logger.Log.Info("Завершено обновление метрик")
-				return
-			default:
-				<-timer.C
+			<-timer.C
 
-				m, _ := mem.VirtualMemory()
-				totalMem := m.Total
-				metricsCPU.UpdateGauge(ctx, gaugesTotalMem, float64(totalMem))
-				freeMem := m.Free
-				metricsCPU.UpdateGauge(ctx, gaugesFreeMem, float64(freeMem))
-				countCPU, _ := cpu.Counts(false)
-				metricsCPU.UpdateGauge(ctx, gaugesCPUutil, float64(countCPU))
-			}
+			m, _ := mem.VirtualMemory()
+			totalMem := m.Total
+			metricsCPU.UpdateGauge(ctx, gaugesTotalMem, float64(totalMem))
+			freeMem := m.Free
+			metricsCPU.UpdateGauge(ctx, gaugesFreeMem, float64(freeMem))
+			countCPU, _ := cpu.Counts(false)
+			metricsCPU.UpdateGauge(ctx, gaugesCPUutil, float64(countCPU))
 		}
 	}
 }

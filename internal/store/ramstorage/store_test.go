@@ -417,3 +417,40 @@ func TestRAMStorage_LoadMetrics(t *testing.T) {
 		})
 	}
 }
+
+func TestRAMStorage_GetBatchMetrics(t *testing.T) {
+	st := NewStorage()
+	st.UpdateGauge(context.Background(), "Test1", 11.1)
+	st.UpdateGauge(context.Background(), "Test2", 22.1)
+	st.UpdateCounter(context.Background(), "Test3", 22)
+
+	type args struct {
+		ctx context.Context
+	}
+	tests := []struct {
+		name             string
+		args             args
+		wantMetricsCount int
+		wantExists       bool
+	}{
+		{
+			name: "positive test",
+			args: args{
+				ctx: context.Background(),
+			},
+			wantMetricsCount: 3,
+			wantExists:       true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotMetrics, gotExists := st.GetBatchMetrics(tt.args.ctx)
+			if !reflect.DeepEqual(len(gotMetrics), tt.wantMetricsCount) {
+				t.Errorf("RAMStorage.GetBatchMetrics() gotMetrics = %v, want %v", gotMetrics, tt.wantMetricsCount)
+			}
+			if gotExists != tt.wantExists {
+				t.Errorf("RAMStorage.GetBatchMetrics() gotExists = %v, want %v", gotExists, tt.wantExists)
+			}
+		})
+	}
+}

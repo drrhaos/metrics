@@ -394,6 +394,15 @@ func TestDatabase_GetGauge(t *testing.T) {
 			wantValueMetric: 111.1,
 			wantExists:      true,
 		},
+		{
+			name: "negative test",
+			args: args{
+				ctx:        context.Background(),
+				nameMetric: "test2",
+			},
+			wantValueMetric: 0,
+			wantExists:      false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -605,6 +614,83 @@ func TestDatabase_GetBatchMetrics(t *testing.T) {
 			assert.Equal(t, tt.wantLenTables, len(gotMetrics))
 			if gotExists != tt.wantExists {
 				t.Errorf("Database.GetBatchMetrics() gotExists = %v, want %v", gotExists, tt.wantExists)
+			}
+		})
+	}
+}
+
+func TestDatabase_GetCounter(t *testing.T) {
+	const (
+		usr           = "usr"
+		password      = "pass"
+		dbName        = "tst"
+		containerName = "psql_docker_tests"
+	)
+
+	c, _ := psqldocker.NewContainer(
+		usr,
+		password,
+		dbName,
+		psqldocker.WithContainerName(containerName),
+	)
+	defer func() {
+		c.Close()
+	}()
+
+	dsn := fmt.Sprintf(
+		"user=%s "+
+			"password=%s "+
+			"dbname=%s "+
+			"host=localhost "+
+			"port=%s "+
+			"sslmode=disable",
+		usr,
+		password,
+		dbName,
+		c.Port(),
+	)
+
+	db := NewDatabase(dsn)
+
+	db.UpdateCounter(context.Background(), "test", 1111)
+
+	type args struct {
+		ctx        context.Context
+		nameMetric string
+	}
+	tests := []struct {
+		name            string
+		args            args
+		wantValueMetric int64
+		wantExists      bool
+	}{
+		{
+			name: "positive test",
+			args: args{
+				ctx:        context.Background(),
+				nameMetric: "test",
+			},
+			wantValueMetric: 1111,
+			wantExists:      true,
+		},
+		{
+			name: "negative test",
+			args: args{
+				ctx:        context.Background(),
+				nameMetric: "test2",
+			},
+			wantValueMetric: 0,
+			wantExists:      false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotValueMetric, gotExists := db.GetCounter(tt.args.ctx, tt.args.nameMetric)
+			if gotValueMetric != tt.wantValueMetric {
+				t.Errorf("Database.GetCounter() gotValueMetric = %v, want %v", gotValueMetric, tt.wantValueMetric)
+			}
+			if gotExists != tt.wantExists {
+				t.Errorf("Database.GetCounter() gotExists = %v, want %v", gotExists, tt.wantExists)
 			}
 		})
 	}
