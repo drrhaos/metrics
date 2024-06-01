@@ -23,6 +23,7 @@ type Config struct {
 	Key             string `env:"KEY" json:"key,omitempty"`                                       // ключ для проверки целостности данных в запросе
 	Restore         bool   `env:"RESTORE" envDefault:"true" json:"restore,omitempty"`             // флаг указывающий на необходимость восстановления из хранилища при старте
 	StoreInterval   int64  `env:"STORE_INTERVAL" envDefault:"-1" json:"store_interval,omitempty"` // интервал сохранения данных
+	TrustedSubnet   string `env:"TRUSTED_SUBNET" json:"trusted_subnet,omitempty"`                 // строковое представление бесклассовой адресации (CIDR)
 }
 
 func (cfg *Config) readFlags() {
@@ -37,6 +38,7 @@ func (cfg *Config) readFlags() {
 	key := flag.String("k", "", "ключ для проверки целостности данных в запросе")
 	restore := flag.Bool("r", true, "Загружать последние сохранения показаний")
 	storeInterval := flag.Int64("i", -1, "Интервал сохранения показаний")
+	trustedSubnet := flag.String("t", "", "Строковое представление бесклассовой адресации (CIDR)")
 	flag.Parse()
 
 	cfg.Address = *address
@@ -52,6 +54,7 @@ func (cfg *Config) readFlags() {
 		cfg.Restore = *restore
 	}
 	cfg.StoreInterval = *storeInterval
+	cfg.TrustedSubnet = *trustedSubnet
 }
 
 func (cfg *Config) readEnv() error {
@@ -85,6 +88,10 @@ func (cfg *Config) readEnv() error {
 
 	if tmpCfg.StoreInterval != -1 {
 		cfg.StoreInterval = tmpCfg.StoreInterval
+	}
+
+	if tmpCfg.TrustedSubnet != "" {
+		cfg.TrustedSubnet = tmpCfg.TrustedSubnet
 	}
 
 	return nil
@@ -130,6 +137,10 @@ func (cfg *Config) readJSON() error {
 
 	if tmpCfg.StoreInterval != -1 && cfg.StoreInterval == -1 {
 		cfg.StoreInterval = tmpCfg.StoreInterval
+	}
+
+	if tmpCfg.TrustedSubnet != "" && cfg.TrustedSubnet == "" {
+		cfg.TrustedSubnet = tmpCfg.TrustedSubnet
 	}
 
 	return nil
