@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 
 	"metrics/internal/logger"
 )
@@ -18,7 +19,7 @@ func RealIP(trustedSubnet string) func(h http.Handler) http.Handler {
 				return
 			}
 
-			ip := getIP(req)
+			ips := getIP(req)
 
 			_, ipNet, err := net.ParseCIDR(trustedSubnet)
 			if err != nil {
@@ -26,11 +27,17 @@ func RealIP(trustedSubnet string) func(h http.Handler) http.Handler {
 				res.WriteHeader(http.StatusBadRequest)
 				return
 			}
+			inContain := false
+			for _, ip := range strings.Split(ips, ", ") {
+				if ipNet.Contains(net.ParseIP(ip)) {
+					logger.Log.Info(fmt.Sprintf("%s входит в подсеть %s", ip, ipNet))
+					inContain = true
+				} else {
+					logger.Log.Warn(fmt.Sprintf("%s не входит в подсеть %s", ip, ipNet))
+				}
+			}
 
-			if ipNet.Contains(ip) {
-				logger.Log.Info(fmt.Sprintf("%s входит в подсеть %s", ip, ipNet))
-			} else {
-				logger.Log.Warn(fmt.Sprintf("%s не входит в подсеть %s", ip, ipNet))
+			if !inContain {
 				res.WriteHeader(http.StatusForbidden)
 				return
 			}
@@ -40,12 +47,12 @@ func RealIP(trustedSubnet string) func(h http.Handler) http.Handler {
 	}
 }
 
-func getIP(r *http.Request) net.IP {
-	var ip string
+func getIP(r *http.Request) string {
+	var ipAddresses string
 
 	if tmpIP := r.Header.Get(xRealIP); tmpIP != "" {
-		ip = tmpIP
+		ipAddresses = tmpIP
 	}
 
-	return net.ParseIP(ip)
+	return ipAddresses
 }
