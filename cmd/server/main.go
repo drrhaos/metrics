@@ -14,6 +14,7 @@ import (
 	"metrics/internal/middlewares/cryptodata"
 	"metrics/internal/middlewares/decompress"
 	"metrics/internal/middlewares/signature"
+	"metrics/internal/middlewares/xrealip"
 	"metrics/internal/server/configure"
 	"metrics/internal/store"
 	"metrics/internal/store/pg"
@@ -89,6 +90,7 @@ func main() {
 	}
 
 	r.Use(logger.RequestLogger)
+	r.Use(xrealip.RealIP(cfg.TrustedSubnet))
 	r.Use(middleware.Compress(5, "application/json", "text/html"))
 	r.Use(decompress.GzipDecompressMiddleware)
 	r.Use(cryptodata.DecryptMiddleware(cfg.CryptoKeyPath))
