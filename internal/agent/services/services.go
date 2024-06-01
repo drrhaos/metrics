@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"math/rand"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -156,6 +157,39 @@ func updateMerticsGops(ctx context.Context, doneCh <-chan os.Signal, metricsCPU 
 	}
 }
 
+func getRealIP() (string, error) {
+	var ipAddresses string
+
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return "", err
+	}
+
+	for _, i := range interfaces {
+		addrs, err := i.Addrs()
+		if err != nil {
+			return "", err
+		}
+
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			if (ip.To4() != nil || ip.To16() != nil) && ipAddresses == "" && !ip.IsLoopback() {
+				ipAddresses = ip.String()
+			} else if (ip.To4() != nil || ip.To16() != nil) && ipAddresses != "" && !ip.IsLoopback() {
+				ipAddresses = fmt.Sprintf("%s, %s", ipAddresses, ip.String())
+			}
+		}
+	}
+
+	return ipAddresses, nil
+}
+
 func sendAllMetric(ctx context.Context, metrics []store.Metrics, cfg configure.Config) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
 	defer cancel()
@@ -202,6 +236,10 @@ func sendAllMetric(ctx context.Context, metrics []store.Metrics, cfg configure.C
 			r = r.WithContext(ctx)
 			r.Header.Set("Content-Type", "application/json")
 			r.Header.Set("Content-Encoding", "gzip")
+			realIP, err := getRealIP()
+			if realIP != "" && err == nil {
+				r.Header.Set("X-Real-IP", realIP)
+			}
 			if cfg.Key != "" {
 				h := hmac.New(sha256.New, []byte(cfg.Key))
 				h.Write(reqData)
