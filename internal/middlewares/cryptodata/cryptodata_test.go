@@ -40,8 +40,8 @@ func TestDecryptMiddleware(t *testing.T) {
 	}
 
 	type want struct {
-		code int
 		body string
+		code int
 	}
 	tests := []struct {
 		name           string
@@ -88,7 +88,7 @@ func TestDecryptMiddleware(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			r := chi.NewRouter()
 			r.Use(DecryptMiddleware(test.privateKeyPath))
-			r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
+			r.Post("/update", func(w http.ResponseWriter, _ *http.Request) {
 				w.Write([]byte("test"))
 				w.WriteHeader(http.StatusOK)
 			})
@@ -108,13 +108,13 @@ func TestDecryptMiddleware(t *testing.T) {
 func TestEncrypt(t *testing.T) {
 	privateKeyGood, _ := rsa.GenerateKey(rand.Reader, 2048)
 	type args struct {
-		plaintext []byte
 		publicKey *rsa.PublicKey
+		plaintext []byte
 	}
 	tests := []struct {
 		name    string
-		args    args
 		want    string
+		args    args
 		wantErr bool
 	}{
 		{

@@ -1,3 +1,4 @@
+// Package xrealip предназначен для проверки IP клиента.
 package xrealip
 
 import (
@@ -11,6 +12,7 @@ import (
 
 var xRealIP = http.CanonicalHeaderKey("X-Real-IP")
 
+// RealIP проверяет входи ли адрес клиета в список разрешенных подсетей
 func RealIP(trustedSubnet string) func(h http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {

@@ -1,5 +1,4 @@
-// Модуль cryptodata предназначен шифрования данных.
-
+// Package cryptodata предназначен шифрования данных.
 package cryptodata
 
 import (

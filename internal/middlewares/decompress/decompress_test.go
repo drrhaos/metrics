@@ -1,5 +1,3 @@
-// Модуль decompress предназначен распаковки упакованных в запросе данных.
-
 package decompress
 
 import (

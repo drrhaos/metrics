@@ -1,4 +1,4 @@
-// Модуль handlers ручки для добавления и получения метрик.
+// Package handlers ручки для добавления и получения метрик.
 package handlers
 
 import (

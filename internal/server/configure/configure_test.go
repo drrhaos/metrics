@@ -1,5 +1,3 @@
-// Модуль configure предназначен для настройки программы.
-
 package configure
 
 import (

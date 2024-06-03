@@ -1,4 +1,4 @@
-// Модуль configure предназначен для настройки программы.
+// Package configure предназначен для настройки программы.
 package configure
 
 import (
@@ -20,10 +20,10 @@ type Config struct {
 	CryptoKeyPath   string `env:"CRYPTO_KEY" json:"crypto_key,omitempty"`                         // передайте путь до файла с приватным ключом
 	DatabaseDsn     string `env:"DATABASE_DSN" json:"database_dsn,omitempty"`                     // DSN базы данных
 	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"nil" json:"store_file,omitempty"` // путь до хранилища данных
+	TrustedSubnet   string `env:"TRUSTED_SUBNET" json:"trusted_subnet,omitempty"`                 // строковое представление бесклассовой адресации (CIDR)
 	Key             string `env:"KEY" json:"key,omitempty"`                                       // ключ для проверки целостности данных в запросе
 	Restore         bool   `env:"RESTORE" envDefault:"true" json:"restore,omitempty"`             // флаг указывающий на необходимость восстановления из хранилища при старте
 	StoreInterval   int64  `env:"STORE_INTERVAL" envDefault:"-1" json:"store_interval,omitempty"` // интервал сохранения данных
-	TrustedSubnet   string `env:"TRUSTED_SUBNET" json:"trusted_subnet,omitempty"`                 // строковое представление бесклассовой адресации (CIDR)
 }
 
 func (cfg *Config) readFlags() {
@@ -168,6 +168,7 @@ func (cfg *Config) checkConfig() bool {
 	return true
 }
 
+// ReadConfig читает конфигурацию сервера
 func (cfg *Config) ReadConfig() bool {
 	cfg.readFlags()
 

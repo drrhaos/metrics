@@ -1,5 +1,3 @@
-// Модуль signature предназначен для проверки целостности запроса.
-
 package signature
 
 import (

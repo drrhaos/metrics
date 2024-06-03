@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
-	"os"
 
 	"metrics/internal/agent/configure"
 	"metrics/internal/agent/services"
@@ -32,8 +30,7 @@ func main() {
 	ok := cfg.ReadConfig()
 
 	if !ok {
-		flag.PrintDefaults()
-		os.Exit(0)
+		logger.Log.Panic("Error read config")
 	}
 
 	services.CollectMetrics(context.Background(), cfg)

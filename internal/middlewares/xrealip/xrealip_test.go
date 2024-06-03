@@ -72,7 +72,7 @@ func TestRealIP(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			r := chi.NewRouter()
 			r.Use(RealIP(test.trustedSubnet))
-			r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
+			r.Post("/update", func(w http.ResponseWriter, _ *http.Request) {
 				w.Write([]byte("test"))
 				w.WriteHeader(http.StatusOK)
 			})

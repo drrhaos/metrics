@@ -428,8 +428,8 @@ func TestRAMStorage_GetBatchMetrics(t *testing.T) {
 		ctx context.Context
 	}
 	tests := []struct {
-		name             string
 		args             args
+		name             string
 		wantMetricsCount int
 		wantExists       bool
 	}{

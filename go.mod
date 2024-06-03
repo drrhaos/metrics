@@ -17,7 +17,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/timakin/bodyclose v0.0.0-20240125160201-f835fa56326a
 	go.uber.org/zap v1.26.0
-	golang.org/x/tools v0.20.0
+	golang.org/x/tools v0.21.0
 	gotest.tools/v3 v3.3.0
 	honnef.co/go/tools v0.4.7
 )
@@ -25,6 +25,7 @@ require (
 require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
+	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect

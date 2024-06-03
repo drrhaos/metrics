@@ -58,7 +58,7 @@ func main() {
 	ok := cfg.ReadConfig()
 
 	if !ok {
-		os.Exit(0)
+		logger.Log.Panic("Error read config")
 	}
 
 	stMetrics := &store.StorageContext{}

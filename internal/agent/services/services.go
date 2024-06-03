@@ -1,3 +1,4 @@
+// Package services пакет сбора и отправки метрик
 package services
 
 import (
@@ -78,7 +79,7 @@ var nameGauges = []string{
 }
 
 func customDelay() retry.DelayTypeFunc {
-	return func(n uint, _ error, config *retry.Config) time.Duration {
+	return func(n uint, _ error, _ *retry.Config) time.Duration {
 		return time.Duration(sleepStep[n])
 	}
 }
@@ -236,8 +237,8 @@ func sendAllMetric(ctx context.Context, metrics []store.Metrics, cfg configure.C
 			r = r.WithContext(ctx)
 			r.Header.Set("Content-Type", "application/json")
 			r.Header.Set("Content-Encoding", "gzip")
-			realIP, err := getRealIP()
-			if realIP != "" && err == nil {
+			realIP, errReal := getRealIP()
+			if realIP != "" && errReal == nil {
 				r.Header.Set("X-Real-IP", realIP)
 			}
 			if cfg.Key != "" {
@@ -298,6 +299,7 @@ func prepareBatch(ctx context.Context, metricsCPU *store.StorageContext, cfg con
 	return metricsBatches
 }
 
+// CollectMetrics осуществляет сбор и отправку метрик на сервер
 func CollectMetrics(ctx context.Context, cfg configure.Config) {
 	doneChUpdate := make(chan os.Signal, 1)
 	signal.Notify(doneChUpdate, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)

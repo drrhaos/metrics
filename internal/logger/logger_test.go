@@ -15,7 +15,7 @@ import (
 func TestRequestLogger(t *testing.T) {
 	r := chi.NewRouter()
 	r.Use(RequestLogger)
-	r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
+	r.Post("/update", func(w http.ResponseWriter, _ *http.Request) {
 		fmt.Println("test")
 		w.Write([]byte("test"))
 		w.WriteHeader(http.StatusOK)

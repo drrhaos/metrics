@@ -1,3 +1,4 @@
+// Package main тест для линтера
 package main
 
 import (

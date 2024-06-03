@@ -1,3 +1,4 @@
+// Package configure для получения конфигурации агента.
 package configure
 
 import (
@@ -12,6 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Config хранит текущую конфигурацию
 type Config struct {
 	Address        string `env:"ADDRESS" json:"address,omitempty"`                                 // адрес эндпоинта HTTP-сервера
 	CryptoKeyPath  string `env:"CRYPTO_KEY" json:"crypto_key,omitempty"`                           // путь до файла с публичным ключом
@@ -142,10 +144,13 @@ func (cfg *Config) checkConfig() (ok bool) {
 	return true
 }
 
+// ReadConfig функция последовательно читает данные из аргументов, переменных окружения и файла.
 func (cfg *Config) ReadConfig() bool {
 	cfg.readFlags()
 	cfg.readEnv()
-	cfg.readJSON()
-	cfg.checkConfig()
-	return true
+	err := cfg.readJSON()
+	if err != nil {
+		return false
+	}
+	return cfg.checkConfig()
 }

@@ -1,3 +1,4 @@
+// Package pg реализует взаимодействие с базой данной Postgres.
 package pg
 
 import (
@@ -8,8 +9,6 @@ import (
 	"metrics/internal/store"
 
 	"github.com/avast/retry-go"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 )
@@ -46,12 +45,12 @@ func NewDatabase(uri string) *Database {
 }
 
 // SaveMetrics заглушка.
-func (db *Database) SaveMetrics(filePath string) bool {
+func (db *Database) SaveMetrics(_ string) bool {
 	return db != nil
 }
 
 // LoadMetrics заглушка.
-func (db *Database) LoadMetrics(filePath string) bool {
+func (db *Database) LoadMetrics(_ string) bool {
 	return db != nil
 }
 
@@ -279,6 +278,7 @@ func (db *Database) GetCounters(ctx context.Context) (map[string]int64, bool) {
 	return valuesMetric, true
 }
 
+// GetBatchMetrics возвращает пачку хранимых метрик.
 func (db *Database) GetBatchMetrics(ctx context.Context) (metrics []store.Metrics, exists bool) {
 	err := retry.Do(
 		func() error {
@@ -311,11 +311,11 @@ func (db *Database) GetBatchMetrics(ctx context.Context) (metrics []store.Metric
 
 	err = retry.Do(
 		func() error {
-			rows, err := db.Conn.Query(ctx,
+			rows, errQery := db.Conn.Query(ctx,
 				`SELECT name, value
 				FROM gauges`)
-			if err != nil {
-				return err
+			if errQery != nil {
+				return errQery
 			}
 			defer rows.Close()
 			for rows.Next() {
@@ -343,7 +343,7 @@ func (db *Database) GetBatchMetrics(ctx context.Context) (metrics []store.Metric
 }
 
 func customDelay() retry.DelayTypeFunc {
-	return func(n uint, err error, config *retry.Config) time.Duration {
+	return func(n uint, _ error, _ *retry.Config) time.Duration {
 		return time.Duration(sleepStep[n])
 	}
 }

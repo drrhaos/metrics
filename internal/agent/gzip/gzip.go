@@ -1,3 +1,4 @@
+// Package gzip пакет сжатия данных
 package gzip
 
 import (
@@ -9,6 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// CompressReqData упаковывает данные
 func CompressReqData(reqData []byte) (*bytes.Buffer, error) {
 	var buf bytes.Buffer
 	zipF := gzip.NewWriter(&buf)
