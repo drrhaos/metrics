@@ -22,6 +22,7 @@ type Config struct {
 	PollInterval   int64  `env:"POLL_INTERVAL" envDefault:"-1" json:"poll_interval,omitempty"`     // частота опроса метрик из пакета runtime
 	RateLimit      int    `env:"RATE_LIMIT" envDefault:"-1" json:"rate_limit,omitempty"`           // количество одновременно исходящих запросов на сервер ограничение «сверху»
 	ReportInterval int64  `env:"REPORT_INTERVAL" envDefault:"-1" json:"report_interval,omitempty"` // частота отправки метрик на сервер
+	GRPC           bool   `env:"GRPC" envDefault:"false" json:"grpc,omitempty"`                    // запуск в режиме gRPC
 }
 
 func (cfg *Config) readFlags() {
@@ -31,6 +32,7 @@ func (cfg *Config) readFlags() {
 	rateLimit := flag.Int("l", -1, "Количество одновременно исходящих запросов на сервер ограничение «сверху»")
 	key := flag.String("k", "", "Ключ для проверки целостности данных в запросе")
 	cryptoKeyPath := flag.String("crypto-key", "", "Путь до файла с публичным ключом")
+	tempGRPC := flag.Bool("grpc", false, "Запуск в режиме gRPC")
 	var configPath string
 	flag.StringVar(&configPath, "config", "", "Путь до файла конфигурации")
 	flag.StringVar(&configPath, "c", "", "Путь до файла конфигурации")
@@ -43,6 +45,7 @@ func (cfg *Config) readFlags() {
 	cfg.RateLimit = *rateLimit
 	cfg.Key = *key
 	cfg.CryptoKeyPath = *cryptoKeyPath
+	cfg.GRPC = *tempGRPC
 }
 
 func (cfg *Config) readEnv() {

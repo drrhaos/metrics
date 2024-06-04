@@ -20,8 +20,12 @@ import (
 	"syscall"
 	"time"
 
+	pb "metrics/internal/proto"
+
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"metrics/internal/agent/configure"
 	"metrics/internal/agent/gzip"
@@ -191,7 +195,7 @@ func getRealIP() (string, error) {
 	return ipAddresses, nil
 }
 
-func sendAllMetric(ctx context.Context, metrics []store.Metrics, cfg configure.Config) error {
+func sendRESTMetric(ctx context.Context, metrics []store.Metrics, cfg configure.Config) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
 	defer cancel()
 
@@ -265,10 +269,50 @@ func sendAllMetric(ctx context.Context, metrics []store.Metrics, cfg configure.C
 	return nil
 }
 
+
+func sendGRPCMetric(ctx context.Context, metrics []store.Metrics, cfg configure.Config) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
+	defer cancel()
+
+	conn, err := grpc.NewClient(cfg.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logger.Log.Warn("Не удалось установить соединение с сервером", zap.Error(err))
+	}
+	defer conn.Close()
+
+	c := pb.NewMetricsClient(conn)
+
+	var pbMetrics []*pb.Metric
+	for _, metric := range metrics {
+		switch metric.MType {
+		case "counter":
+			pbMetrics = append(pbMetrics, &pb.Metric{
+				Id: metric.ID,
+				Type: metric.MType,
+				Delta: *metric.Delta,
+				})
+		case "gauge":			
+			pbMetrics = append(pbMetrics, &pb.Metric{
+				Id: metric.ID,
+				Type: metric.MType,
+				Value: *metric.Value,
+				})
+		}
+
+	}
+
+	_ , err = c.UpdateMetrics(ctx, &pb.AddMetricsRequest{
+		Metric: pbMetrics,
+	})
+
+	return err
+}
+
 func sendMetricsWorker(ctx context.Context, workerID int, jobs <-chan []store.Metrics, cfg configure.Config) {
 	for job := range jobs {
 		logger.Log.Info(fmt.Sprintf("Воркер %d количество метрик %d", workerID, len(job)))
-		sendAllMetric(ctx, job, cfg)
+		sendRESTMetric(ctx, job, cfg)
+		sendGRPCMetric(ctx, job, cfg)
 	}
 }
 

@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package metrics;
+
+option go_package = "metrics/internal/proto";
+
+message Metric  {
+	int64 delta = 1;// значение метрики в случае передачи counter
+	double value = 2; // значение метрики в случае передачи gauge
+	string id = 3;    // имя метрики
+    enum Type {
+        gauge = 0;
+        counter = 1;
+    }  
+	string type = 4; // параметр, принимающий значение gauge или counter
+}
+
+message AddMetricsRequest {
+    repeated Metric metric = 1; // метрика
+}
+
+message AddMetricsResponse {
+    string error = 1; // ошибка
+}
+
+service Metrics {
+    rpc UpdateMetrics(AddMetricsRequest) returns (AddMetricsResponse);
+}

@@ -310,7 +310,7 @@ func Test_sendAllMetric(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := sendAllMetric(tt.args.ctx, tt.args.metrics, tt.args.cfg)
+			err := sendRESTMetric(tt.args.ctx, tt.args.metrics, tt.args.cfg)
 			if tt.want.isError {
 				assert.ErrorContains(t, err, tt.want.message)
 			} else {
