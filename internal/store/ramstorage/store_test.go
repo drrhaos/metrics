@@ -5,6 +5,8 @@ import (
 	"os"
 	"reflect"
 	"testing"
+
+	"metrics/internal/store"
 )
 
 func TestRAMStorage_UpdateCounter(t *testing.T) {
@@ -384,7 +386,10 @@ func TestRAMStorage_LoadMetrics(t *testing.T) {
 		Gauge:   map[string]float64{"first": 34.1},
 		Counter: map[string]int64{"first": 34},
 	}
-	storage.SaveMetrics(fileTmp)
+	stMetrics := &store.StorageContext{}
+	stMetrics.SetStorage(storage)
+
+	stMetrics.SaveMetrics(fileTmp)
 
 	type args struct {
 		filePath string
@@ -411,7 +416,7 @@ func TestRAMStorage_LoadMetrics(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := storage.LoadMetrics(tt.args.filePath); got != tt.want {
+			if got := stMetrics.LoadMetrics(tt.args.filePath); got != tt.want {
 				t.Errorf("RAMStorage.LoadMetrics() = %v, want %v", got, tt.want)
 			}
 		})

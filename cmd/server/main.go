@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -25,7 +24,6 @@ var (
 const flagLogLevel = "info"
 
 func main() {
-	ctx := context.Background()
 	fmt.Println("Build version:", buildVersion)
 	fmt.Println("Build date:", buildDate)
 	fmt.Println("Build commit:", buildCommit)
@@ -63,8 +61,8 @@ func main() {
 	}
 
 	if cfg.GRPC {
-		grpcmode.Run(ctx, cfg, stMetrics)
+		grpcmode.Run(cfg, stMetrics)
 	} else {
-		restmode.Run(ctx, cfg, stMetrics)
+		restmode.Run(cfg, stMetrics)
 	}
 }

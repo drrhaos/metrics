@@ -17,7 +17,7 @@ import (
 )
 
 // Run запускает сервер
-func Run(_ context.Context, cfg configure.Config, stMetric *store.StorageContext) {
+func Run(cfg configure.Config, stMetric *store.StorageContext) {
 	listen, err := net.Listen("tcp", cfg.Address)
 	if err != nil {
 		log.Fatal(err)

@@ -374,8 +374,6 @@ func TestMetricsHandler_UpdatesMetricJSONHandler(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			// bodyMetr, _ := json.Marshal(test.dataMetric)
-
 			req := httptest.NewRequest(test.typeReqest, urlUpdatesMetricJSONConst, bytes.NewReader([]byte(test.dataMetric)))
 			w := httptest.NewRecorder()
 

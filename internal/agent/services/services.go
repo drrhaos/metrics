@@ -269,7 +269,6 @@ func sendRESTMetric(ctx context.Context, metrics []store.Metrics, cfg configure.
 	return nil
 }
 
-
 func sendGRPCMetric(ctx context.Context, metrics []store.Metrics, cfg configure.Config) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
 	defer cancel()
@@ -287,21 +286,20 @@ func sendGRPCMetric(ctx context.Context, metrics []store.Metrics, cfg configure.
 		switch metric.MType {
 		case "counter":
 			pbMetrics = append(pbMetrics, &pb.Metric{
-				Id: metric.ID,
-				Type: metric.MType,
+				Id:    metric.ID,
+				Type:  metric.MType,
 				Delta: *metric.Delta,
-				})
-		case "gauge":			
+			})
+		case "gauge":
 			pbMetrics = append(pbMetrics, &pb.Metric{
-				Id: metric.ID,
-				Type: metric.MType,
+				Id:    metric.ID,
+				Type:  metric.MType,
 				Value: *metric.Value,
-				})
+			})
 		}
-
 	}
 
-	_ , err = c.UpdateMetrics(ctx, &pb.AddMetricsRequest{
+	_, err = c.UpdateMetrics(ctx, &pb.AddMetricsRequest{
 		Metric: pbMetrics,
 	})
 

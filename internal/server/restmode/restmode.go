@@ -34,7 +34,7 @@ const (
 )
 
 // Run функция запускает http сервер с заданными парпаметрами
-func Run(ctx context.Context, cfg configure.Config, stMetrics *store.StorageContext) {
+func Run(cfg configure.Config, stMetrics *store.StorageContext) {
 	r := chi.NewRouter()
 
 	server := &http.Server{
@@ -76,6 +76,7 @@ func Run(ctx context.Context, cfg configure.Config, stMetrics *store.StorageCont
 	r.Post(urlGetMetricJSONConst, func(w http.ResponseWriter, r *http.Request) {
 		metricHandler.GetMetricJSONHandler(w, r, stMetrics)
 	})
+
 	go func() {
 		if err := http.ListenAndServe(cfg.Address, r); err != nil {
 			logger.Log.Fatal(err.Error())
@@ -86,9 +87,10 @@ func Run(ctx context.Context, cfg configure.Config, stMetrics *store.StorageCont
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	<-quit
+
 	logger.Log.Info("Получен сигнал прерывания, начинается грейсфул шатдаун")
 
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
