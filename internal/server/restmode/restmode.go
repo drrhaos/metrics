@@ -88,7 +88,7 @@ func Run(ctx context.Context, cfg configure.Config, stMetrics *store.StorageCont
 	<-quit
 	logger.Log.Info("Получен сигнал прерывания, начинается грейсфул шатдаун")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
