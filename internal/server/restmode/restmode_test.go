@@ -76,6 +76,7 @@ func TestRun(t *testing.T) {
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
+			defer resp.Body.Close()
 
 			assert.Equal(t, resp.StatusCode, tt.want)
 		})
