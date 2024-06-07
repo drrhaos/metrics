@@ -276,6 +276,7 @@ func sendGRPCMetric(ctx context.Context, metrics []store.Metrics, cfg configure.
 	conn, err := grpc.NewClient(cfg.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.Log.Warn("Не удалось установить соединение с сервером", zap.Error(err))
+		return err
 	}
 	defer conn.Close()
 
@@ -307,10 +308,18 @@ func sendGRPCMetric(ctx context.Context, metrics []store.Metrics, cfg configure.
 }
 
 func sendMetricsWorker(ctx context.Context, workerID int, jobs <-chan []store.Metrics, cfg configure.Config) {
+	var errSend error
 	for job := range jobs {
 		logger.Log.Info(fmt.Sprintf("Воркер %d количество метрик %d", workerID, len(job)))
-		sendRESTMetric(ctx, job, cfg)
-		sendGRPCMetric(ctx, job, cfg)
+		if cfg.GRPC {
+			errSend = sendGRPCMetric(ctx, job, cfg)
+		} else {
+			errSend = sendRESTMetric(ctx, job, cfg)
+		}
+		if errSend != nil {
+			logger.Log.Warn("Не удалось отправить метрики", zap.Error(errSend))
+		}
+
 	}
 }
 
